@@ -1,0 +1,49 @@
+{
+  "storageLocations": {
+    "Garage": [
+      "Top Shelf",
+      "Yellow Box",
+      "Gray Toolbox",
+      "Bin 1"
+    ],
+    "Kitchen": [
+      "Tall Cabinet",
+      "Pantry Shelf",
+      "Bin 1"
+    ],
+    "Basement": [
+      "Middle Shelf",
+      "Bin 1"
+    ],
+    "Attic": [],
+    "Shed": [
+      "Bin 1",
+      "Middle Shelf"
+    ]
+  },
+  "inventoryLocations": {
+    "Garage": [
+      "Top Shelf",
+      "Yellow Box",
+      "Gray Toolbox",
+      "Bin 1"
+    ],
+    "Kitchen": [
+      "Tall Cabinet",
+      "Pantry Shelf",
+      "Bin 1"
+    ],
+    "Basement": [
+      "Middle Shelf",
+      "Bin 1"
+    ],
+    "Attic": [],
+    "Shed": [
+      "Bin 1",
+      "Middle Shelf"
+    ]
+  },
+  "storageItems": [],
+  "inventoryItems": [],
+  "note": "This is priming test data - edit me, then file will be copied to app documents on first run"
+}

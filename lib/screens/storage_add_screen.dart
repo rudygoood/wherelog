@@ -14,6 +14,8 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
   final tier2Controller = TextEditingController();
   final itemNameController = TextEditingController();
   final notesController = TextEditingController();
+  final qtyController = TextEditingController(text: '1');
+  final valueController = TextEditingController();
   final tier1Focus = FocusNode();
   final tier2Focus = FocusNode();
   List<String> addedItemsLog = [];
@@ -115,6 +117,12 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
   void dispose() {
     tier1Focus.dispose();
     tier2Focus.dispose();
+    tier1Controller.dispose();
+    tier2Controller.dispose();
+    itemNameController.dispose();
+    notesController.dispose();
+    qtyController.dispose();
+    valueController.dispose();
     super.dispose();
   }
 
@@ -122,7 +130,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     final r = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (c) => _TierPickerSheet(
         title: 'General - Place',
         existing: storageTier1List,
@@ -141,7 +149,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     final r = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (c) => _TierPickerSheet(
         title: 'Specific - Bin for $parent',
         existing: getTier2ForCurrentTier1(),
@@ -165,26 +173,35 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     }
     final loc = concatenatedLocation.isEmpty ? tier1Controller.text.trim() : concatenatedLocation;
     final hasPhoto = photoFile != null ? ' 📷' : '';
+    final addedName = itemNameController.text.trim();
+    final qty = int.tryParse(qtyController.text.trim()) ?? 1;
+    final valueText = valueController.text.trim();
+    final valueAmt = double.tryParse(valueText.replaceAll('\$', '').trim());
     final item = {
-      'name': itemNameController.text.trim(),
+      'name': addedName,
       'tier1': tier1Controller.text.trim(),
       'tier2': tier2Controller.text.trim(),
       'place': tier1Controller.text.trim(),
       'bin': tier2Controller.text.trim(),
       'location': loc,
+      'qty': qty,
+      'quantity': qty,
+      'value': valueAmt,
+      'valueAmount': valueText,
       'notes': notesController.text.trim(),
       'photo': photoFile?.path,
       'createdAt': DateTime.now().toIso8601String(),
     };
-    final addedName = itemNameController.text.trim();
     await _locationRepo.addStorageItem(item);
     setState(() {
-      addedItemsLog.add('$addedName @ $loc$hasPhoto');
+      addedItemsLog.add('$addedName x$qty @ $loc$hasPhoto');
     });
     itemNameController.clear();
     notesController.clear();
+    qtyController.text = '1';
+    valueController.clear();
     setState(() => photoFile = null);
-    showCenterNotice('Added: $addedName @ $loc$hasPhoto');
+    showCenterNotice('Added: $addedName x$qty @ $loc$hasPhoto');
   }
 
   Future<void> openNotesEditor() async {
@@ -192,11 +209,11 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     final result = await showDialog<String>(
       context: context,
       builder: (c) => AlertDialog(
-        title: Text('Edit Notes'),
+        title: const Text('Edit Notes'),
         content: TextField(controller: tempCtrl, minLines: 4, maxLines: 8),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(c, tempCtrl.text), child: Text('Save')),
+          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(c, tempCtrl.text), child: const Text('Save')),
         ],
       ),
     );
@@ -208,9 +225,9 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
       context: context,
       builder: (c) => SafeArea(
         child: Wrap(children: [
-          ListTile(leading: Icon(Icons.photo_camera), title: Text('Take Photo'), onTap: () => Navigator.pop(c, ImageSource.camera)),
-          ListTile(leading: Icon(Icons.photo_library), title: Text('Choose from Gallery'), onTap: () => Navigator.pop(c, ImageSource.gallery)),
-          if (photoFile != null) ListTile(leading: Icon(Icons.delete, color: Colors.red), title: Text('Remove Photo'), onTap: () => Navigator.pop(c, null)),
+          ListTile(leading: const Icon(Icons.photo_camera), title: const Text('Take Photo'), onTap: () => Navigator.pop(c, ImageSource.camera)),
+          ListTile(leading: const Icon(Icons.photo_library), title: const Text('Choose from Gallery'), onTap: () => Navigator.pop(c, ImageSource.gallery)),
+          if (photoFile != null) ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text('Remove Photo'), onTap: () => Navigator.pop(c, null)),
         ]),
       ),
     );
@@ -233,19 +250,14 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     required VoidCallback onAddTap,
     required List<String> existing,
   }) {
-    final text = controller.text.trim();
-    final parent = tier1Controller.text.trim();
-    final bool isDup = isTier1 ? isDuplicateTier1(text) : isDuplicateTier2(parent, text);
-    final bool canAdd = text.isNotEmpty && !isDup && (isTier1 || parent.isNotEmpty);
-    final String? similar = !isTier1 && text.isNotEmpty ? findSimilarTier2(parent, text) : null;
-
-    final String filter = controller.text.toLowerCase();
-    final List<String> filtered = filter.isEmpty
-        ? []
-        : existing.where((e) => e.toLowerCase().contains(filter)).toList();
-
-    final bool showDropdown = enabled && focusNode.hasFocus && filtered.isNotEmpty;
-
+    final filter = controller.text.toLowerCase().trim();
+    final filtered = filter.isEmpty ? existing : existing.where((e) => e.toLowerCase().contains(filter)).toList();
+    final showDropdown = focusNode.hasFocus && filtered.isNotEmpty;
+    final bool canAdd = controller.text.trim().isNotEmpty && (isTier1 ? !isDuplicateTier1(controller.text.trim()) : !isDuplicateTier2(tier1Controller.text.trim(), controller.text.trim()));
+    String? similar;
+    if (!isTier1 && controller.text.trim().isNotEmpty) {
+      similar = findSimilarTier2(tier1Controller.text.trim(), controller.text.trim());
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -256,24 +268,14 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
                 controller: controller,
                 focusNode: focusNode,
                 enabled: enabled,
-                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600, fontSize: 13),
+                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: hint,
                   hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
-                  prefixIcon: Icon(Icons.search, size: 18, color: Colors.black45),
-                  suffixIcon: text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            controller.clear();
-                            setState(() {});
-                          },
-                        )
-                      : null,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   filled: true,
                   fillColor: enabled ? Colors.white : Colors.black12,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   isDense: true,
                 ),
                 onChanged: (_) => setState(() {}),
@@ -317,27 +319,29 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               itemBuilder: (c, i) {
                 final e = filtered[i];
                 final bool isExact = e.toLowerCase() == filter;
-                return ListTile(
-                  dense: true,
-                  title: Text(e, style: TextStyle(fontWeight: isExact ? FontWeight.bold : FontWeight.w600, fontSize: 13)),
-                  trailing: isExact ? Icon(Icons.check, size: 16, color: Colors.black87) : null,
-                  onTap: () {
-                    setState(() {
-                      controller.text = e;
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (_) {
+                    controller.text = e;
+                    controller.selection = TextSelection.fromPosition(TextPosition(offset: e.length));
+                    setState(() {});
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      if (focusNode.hasFocus) focusNode.unfocus();
                     });
-                    focusNode.unfocus();
                   },
+                  child: ListTile(
+                    dense: true,
+                    title: Text(e, style: TextStyle(fontWeight: isExact ? FontWeight.bold : FontWeight.w600, fontSize: 13)),
+                    trailing: isExact ? Icon(Icons.check, size: 16, color: Colors.black87) : null,
+                  ),
                 );
               },
             ),
           ),
-        if (similar != null)
+                if (similar != null)
           Padding(
             padding: EdgeInsets.only(top: 4, left: 4),
-            child: InkWell(
-              onTap: () { controller.text = similar; controller.selection = TextSelection.fromPosition(TextPosition(offset: similar.length)); setState(() {}); focusNode.unfocus(); },
-              child: Text('Similar to "$similar" — tap to use that?', style: TextStyle(fontSize: 11, color: Colors.orange.shade800, fontWeight: FontWeight.w600)),
-            ),
+            child: Text('Similar to "$similar" exists — select it from the list above', style: TextStyle(fontSize: 11, color: Colors.orange.shade800, fontWeight: FontWeight.w600)),
           ),
       ],
     );
@@ -384,7 +388,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
             children: [
               const TextSpan(text: 'Where', style: TextStyle(color: Colors.black87)),
               const TextSpan(text: 'Log', style: TextStyle(color: Color(0xFFB91C1C))),
-              const TextSpan(text: ' - Add', style: TextStyle(color: Colors.black54, fontSize: 16, fontWeight: FontWeight.w600)),
+              const TextSpan(text: ' - Add Storage', style: TextStyle(color: Colors.black54, fontSize: 16, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -401,7 +405,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               child: Text('Location: ${concatenatedLocation.isEmpty ? '—' : concatenatedLocation}', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
             ),
             const SizedBox(height: 10),
-            const Text('GENERAL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+            const Text('GENERAL AREA (required)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
             const SizedBox(height: 4),
             buildLocationField(
               controller: tier1Controller,
@@ -414,7 +418,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               existing: storageTier1List,
             ),
             const SizedBox(height: 12),
-            const Text('SPECIFIC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+            const Text('SPECIFIC AREA (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
             const SizedBox(height: 4),
             buildLocationField(
               controller: tier2Controller,
@@ -448,12 +452,57 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
             const SizedBox(height: 14),
             Row(
               children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('QTY', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: qtyController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                      decoration: InputDecoration(
+                        hintText: '1',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        isDense: true,
+                      ),
+                    ),
+                  ]),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('VALUE (\$)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: valueController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 25.00',
+                        prefixIcon: const Icon(Icons.attach_money, size: 18),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        isDense: true,
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
                 const Text('NOTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
                 Spacer(),
                 InkWell(
                   onTap: openNotesEditor,
                   borderRadius: BorderRadius.circular(6),
-                  child: Padding(
+                  child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     child: Row(children: [Icon(Icons.open_in_full, size: 14, color: Colors.black54), SizedBox(width: 4), Text('Expand', style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600))]),
                   ),
@@ -529,8 +578,8 @@ class _TierPickerSheetState extends State<_TierPickerSheet> {
           const SizedBox(height: 8),
           if (canAdd)
             ListTile(
-              leading: Icon(Icons.add, color: Colors.black87),
-              title: Text('Add "$filter" as new', style: TextStyle(fontWeight: FontWeight.bold)),
+              leading: const Icon(Icons.add, color: Colors.black87),
+              title: Text('Add "$filter" as new', style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 widget.onAddNew(filter.trim());
                 Navigator.pop(context, filter.trim());

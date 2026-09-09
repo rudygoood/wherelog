@@ -125,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         backgroundColor: Color(0xFFF5F3EE),
         elevation: 0,
         title: Row(children: [
-          Image.asset('assets/icon/app_icon.png', width: 36, height: 36, errorBuilder: (c,e,s)=> Icon(Icons.inventory_2)),
+          Image.asset('assets/icon/app_icon.png', width: 48, height: 48, errorBuilder: (c,e,s)=> Icon(Icons.inventory_2)),
           SizedBox(width: 8),
           RichText(text: TextSpan(children: [
             TextSpan(text: 'Where', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 22)),
@@ -136,20 +136,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
       body: Column(children: [
         Container(
-          color: Color(0xFFE8E2D9),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Color(0xFFEDE8DF),
+          ),
           child: TabBar(
             controller: _tabController,
             labelColor: Colors.black,
             unselectedLabelColor: Colors.black54,
-            indicator: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
+            indicator: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+            ),
+            indicatorPadding: EdgeInsets.symmetric(horizontal: 4),
+            indicatorSize: TabBarIndicatorSize.tab,
+            labelPadding: EdgeInsets.symmetric(horizontal: 2),
+            labelStyle: TextStyle(fontWeight: FontWeight.w800),
+            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
             tabs: [
               Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Storage'),
-              Tab(icon: Icon(Icons.home_work_outlined), text: 'Inventory'),
+              Tab(icon: Icon(Icons.chair_outlined), text: 'Inventory'),
               Tab(icon: Icon(Icons.location_on_outlined), text: 'POI'),
             ],
           ),
         ),
-        if (_tabIndex == 0) _buildSearchFilterBar(),
+                if (_tabIndex == 0) _buildSearchFilterBar(),
         Expanded(child: TabBarView(controller: _tabController, children: [
           _buildStorageList(),
           Center(child: Text('Inventory - 5 Place • coming from screenshots next')),
@@ -183,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildSearchFilterBar() {
     if (_searchMode) {
       return Container(
-        color: Colors.white,
+        color: Color(0xFFF5F3EE),
         padding: EdgeInsets.all(12),
         child: Row(children: [
           Expanded(child: TextField(controller: _searchController, autofocus: true, decoration: InputDecoration(hintText: 'SEARCH STORAGE...', prefixIcon: Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(24))), onChanged: (v)=>setState(()=>_searchQuery=v))),
@@ -205,7 +216,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildStorageList() {
-    return ListView.builder(
+    return Container(
+      color: Color(0xFFF5F3EE),
+      child: ListView.builder(
       padding: EdgeInsets.all(12),
       itemCount: filteredItems.length,
       itemBuilder: (c,i){
@@ -213,7 +226,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final locationLabel = item.bin == null ? item.place : '${item.place} / ${item.bin}';
         return Card(
           margin: EdgeInsets.only(bottom: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: Color(0xFFFAF6F0),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.black12)),
           child: ListTile(
             onTap: () async {
               final repoIdx = _findRepoIndexForItem(item);
@@ -236,6 +251,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         );
       },
+      ),
     );
   }
 

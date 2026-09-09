@@ -347,6 +347,108 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     );
   }
 
+  Future<void> openFullPhotoViewer(File file) async {
+    await showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(10),
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              child: Center(child: Image.file(file, fit: BoxFit.contain)),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Row(
+                children: [
+                  IconButton(icon: const Icon(Icons.edit, color: Colors.white), tooltip: 'Replace', onPressed: () { Navigator.pop(c); openPhotoSheet(); }),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(c)),
+                ],
+              ),
+            ),
+            Positioned(
+              bottom: 12,
+              left: 0,
+              right: 0,
+              child: Center(child: Text('Pinch to zoom — tap ✕ to close', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600))),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDistinctPlaceholder() {
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Opacity(opacity: 0.68, child: Image.asset('assets/icon/app_icon.png', width: 64, height: 64, fit: BoxFit.contain)),
+            const SizedBox(height: 6),
+            const Text('No Photo', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 11)),
+            const Text('Tap to add', style: TextStyle(color: Colors.black54, fontSize: 10, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget buildPhotoBoxSquare() {
+    final bool hasPhoto = photoFile != null;
+    return InkWell(
+      onTap: () {
+        if (hasPhoto) {
+          openFullPhotoViewer(photoFile!);
+        } else {
+          openPhotoSheet();
+        }
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black38), borderRadius: BorderRadius.circular(10)),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(9),
+          child: hasPhoto
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Center(child: Image.file(photoFile!, fit: BoxFit.contain)),
+                    Positioned(
+                      right: 5,
+                      bottom: 5,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(5)),
+                        child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.zoom_in, size: 11, color: Colors.white), SizedBox(width: 2), Text('View', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold))]),
+                      ),
+                    ),
+                    Positioned(
+                      right: 5,
+                      top: 5,
+                      child: InkWell(
+                        onTap: openPhotoSheet,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: Colors.black12)),
+                          child: const Icon(Icons.edit, size: 12, color: Colors.black54),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : _buildDistinctPlaceholder(),
+        ),
+      ),
+    );
+  }
+
   Widget buildPhotoBox() {
     return InkWell(
       onTap: openPhotoSheet,
@@ -431,10 +533,6 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               existing: getTier2ForCurrentTier1(),
             ),
             const SizedBox(height: 18),
-            const Text('PHOTO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
-            const SizedBox(height: 4),
-            buildPhotoBox(),
-            const SizedBox(height: 18),
             const Text('ITEM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
             const SizedBox(height: 4),
             TextField(
@@ -450,47 +548,52 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               ),
             ),
             const SizedBox(height: 14),
+            // Square thumbnail half-width beside vertically stacked Quantity/Value - consistent border matching other fields
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('QTY', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                    const SizedBox(height: 4),
-                    TextField(
-                      controller: qtyController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                      decoration: InputDecoration(
-                        hintText: '1',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        isDense: true,
-                      ),
-                    ),
-                  ]),
+                  flex: 3,
+                  child: AspectRatio(aspectRatio: 1, child: buildPhotoBoxSquare()),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('VALUE (\$)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                    const SizedBox(height: 4),
-                    TextField(
-                      controller: valueController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 25.00',
-                        prefixIcon: const Icon(Icons.attach_money, size: 18),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        isDense: true,
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: qtyController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          isDense: true,
+                        ),
                       ),
-                    ),
-                  ]),
+                      const SizedBox(height: 12),
+                      const Text('VALUE (\$)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: valueController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.attach_money, size: 18),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          isDense: true,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -25,3 +25,4 @@ flutter:
   assets:
     - assets/data/wherelog_data.json
     - assets/icon/app_icon.png
+    - assets/icon/wingback_line.png

@@ -148,6 +148,8 @@ class _HomeScreenState extends State<HomeScreen>
   bool _searchMode = false;
   String _sortBy = 'Recent';
   String _filterBy = 'All';
+  bool _selectMode = false;
+  Set<String> _selectedIds = {};
   final TextEditingController _searchController = TextEditingController();
   final LocationRepository _repo = LocationRepository();
 
@@ -461,27 +463,16 @@ class _HomeScreenState extends State<HomeScreen>
             unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
             tabs: [
               Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Storage'),
-              Tab(icon: Icon(Icons.chair_outlined), text: 'Inventory'),
+              Tab(icon: ImageIcon(AssetImage('assets/icon/wingback_line.png')), text: 'Inventory'),
               Tab(icon: Icon(Icons.location_on_outlined), text: 'POI'),
             ],
           ),
         ),
-        if (_tabIndex == 0) _buildSearchFilterBar(),
+        if (_tabIndex == 0 || _tabIndex == 1) _buildSearchFilterBar(),
         Expanded(
             child: TabBarView(controller: _tabController, children: [
           _buildStorageList(),
-          ListView.builder(
-            padding: EdgeInsets.all(12),
-            itemCount: _repo.inventoryItems.length,
-            itemBuilder: (c, i) {
-              final m = _repo.inventoryItems[i];
-              return Card(
-                  child: ListTile(
-                      title: Text(m['name'] ?? 'Unnamed'),
-                      subtitle:
-                          Text('${m['tier1'] ?? ''} / ${m['tier2'] ?? ''}')));
-            },
-          ),
+          _buildInventoryList(),
           Center(child: Text('POI - coming next')),
         ])),
       ]),
@@ -489,40 +480,16 @@ class _HomeScreenState extends State<HomeScreen>
         color: Colors.white,
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: SafeArea(
-            child: Row(children: [
-          Expanded(
-              child: OutlinedButton(
-                  onPressed: () {},
-                  child: Text('SELECT'),
-                  style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.black)))),
-          SizedBox(width: 12),
-          Expanded(
-              child: ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => StorageAddScreen()));
-                    if (mounted) {
-                      await _repo.load();
-                      setState(() {
-                        places = _placesFromRepo();
-                        items = _itemsFromRepo();
-                      });
-                    }
-                  },
-                  icon: Icon(Icons.add),
-                  label: Text('+ ITEM'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16)))),
-        ])),
+            child: _selectMode ? _buildSelectBottomBar() : _buildNormalBottomBar()
+        ),
       ),
     );
   }
 
   Widget _buildSearchFilterBar() {
+    final isStorage = _tabIndex == 0;
+    final count = isStorage ? filteredItems.length : filteredInventoryItems.length;
+    final hint = isStorage ? 'SEARCH STORAGE...' : 'SEARCH INVENTORY...';
     if (_searchMode) {
       return Container(
         color: Color(0xFFF5F3EE),
@@ -533,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen>
                   controller: _searchController,
                   autofocus: true,
                   decoration: InputDecoration(
-                      hintText: 'SEARCH STORAGE...',
+                      hintText: hint,
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24))),
@@ -550,12 +517,28 @@ class _HomeScreenState extends State<HomeScreen>
         ]),
       );
     }
+    final isFilterActive = _filterBy != 'All';
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(children: [
-        Text('${filteredItems.length} items',
-            style: TextStyle(color: Colors.black54)),
+        Text('$count ${isStorage ? 'storage' : 'inventory'} items',
+            style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w600)),
+        if (isFilterActive) ...[
+          SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => setState(() {
+              _filterBy = 'All';
+            }),
+            icon: Icon(Icons.filter_alt_off, size: 16),
+            label: Text('Clear filter'),
+            style: TextButton.styleFrom(
+              foregroundColor: Color(0xFFB91C1C),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ],
         Spacer(),
         IconButton(icon: Icon(Icons.tune), onPressed: () => _openFilterSheet()),
         IconButton(
@@ -565,6 +548,83 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _buildNormalBottomBar() {
+
+    return Row(children: [
+          Expanded(
+              child: OutlinedButton(
+                  onPressed: () => setState(() {
+                    _selectMode = true;
+                    _selectedIds.clear();
+                  }),
+                  child: Text(_selectMode ? 'CANCEL SELECT' : 'SELECT'),
+                  style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: Colors.black)))),
+          SizedBox(width: 12),
+          Expanded(
+              child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => StorageAddScreen()));
+                    if (mounted) {
+                      await _repo.load();
+                      setState(() {
+                        places = _placesFromRepo();
+                        items = _itemsFromRepo();
+                        inventoryItemsList = _inventoryItemsFromRepo();
+                      });
+                    }
+                  },
+                  icon: Icon(Icons.add),
+                  label: Text('ITEM'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16)))),
+        ]);
+  }
+
+  Widget _buildSelectBottomBar() {
+    final selectedCount = _selectedIds.length;
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Text('$selectedCount selected', style: TextStyle(fontWeight: FontWeight.w800)),
+      SizedBox(height: 8),
+      Row(children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => setState(() {
+              _selectMode = false;
+              _selectedIds.clear();
+            }),
+            icon: Icon(Icons.close),
+            label: Text('CANCEL'),
+            style: OutlinedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)),
+          ),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: selectedCount == 0 ? null : () => _moveSelectedItems(),
+            icon: Icon(Icons.drive_file_move_outlined),
+            label: Text('MOVE'),
+            style: OutlinedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)),
+          ),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: selectedCount == 0 ? null : () => _deleteSelectedItems(),
+            icon: Icon(Icons.delete_outline),
+            label: Text('DELETE'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14)),
+          ),
+        ),
+      ]),
+    ]);
+  }
+
+
   Widget _buildStorageList() {
     return Container(
       color: Color(0xFFF5F3EE),
@@ -573,17 +633,25 @@ class _HomeScreenState extends State<HomeScreen>
         itemCount: filteredItems.length,
         itemBuilder: (c, i) {
           final item = filteredItems[i];
+          final isSelected = _selectedIds.contains(item.id);
           final locationLabel =
               item.bin == null ? item.place : '${item.place} / ${item.bin}';
           return Card(
             margin: EdgeInsets.only(bottom: 8),
-            color: Color(0xFFFAF6F0),
+            color: isSelected ? Color(0xFFE8F0FF) : Color(0xFFFAF6F0),
             elevation: 0,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.black12)),
+                side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
             child: ListTile(
               onTap: () async {
+                if (_selectMode) {
+                  setState(() {
+                    if (isSelected) _selectedIds.remove(item.id);
+                    else _selectedIds.add(item.id);
+                  });
+                  return;
+                }
                 final repoIdx = _findRepoIndexForItem(item);
                 if (repoIdx < 0) return;
                 await Navigator.of(context).push(
@@ -598,15 +666,20 @@ class _HomeScreenState extends State<HomeScreen>
                   });
                 }
               },
-              leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                      color: Color(0xFFF5F3EE),
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Center(
-                      child: Text(item.emoji, style: TextStyle(fontSize: 24)))),
-              title: Text('(${item.qty}) ${item.name}',
+              leading: _selectMode
+                  ? Checkbox(value: isSelected, onChanged: (v) => setState(() {
+                      if (v == true) _selectedIds.add(item.id);
+                      else _selectedIds.remove(item.id);
+                    }))
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                          color: Color(0xFFF5F3EE),
+                          borderRadius: BorderRadius.circular(12)),
+                      child: Center(
+                          child: Text(item.emoji, style: TextStyle(fontSize: 24)))),
+              title: Text(item.qty == 1 ? item.name : '(${item.qty}) ${item.name}',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               subtitle: Container(
                   margin: EdgeInsets.only(top: 4),
@@ -617,7 +690,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Text(locationLabel,
                       style: TextStyle(
                           fontSize: 12, fontWeight: FontWeight.w600))),
-              trailing: Icon(Icons.chevron_right),
+              trailing: _selectMode ? null : Icon(Icons.chevron_right),
             ),
           );
         },
@@ -633,17 +706,24 @@ class _HomeScreenState extends State<HomeScreen>
         itemCount: filteredInventoryItems.length,
         itemBuilder: (c, i) {
           final item = filteredInventoryItems[i];
+          final isSelected = _selectedIds.contains(item.id);
           final locationLabel = item.bin == null ? item.place : '${item.place} / ${item.bin}';
           return Card(
             margin: EdgeInsets.only(bottom: 8),
-            color: Color(0xFFFAF6F0),
+            color: isSelected ? Color(0xFFE8F0FF) : Color(0xFFFAF6F0),
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.black12)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
             child: ListTile(
               onTap: () async {
+                if (_selectMode) {
+                  setState(() {
+                    if (isSelected) _selectedIds.remove(item.id);
+                    else _selectedIds.add(item.id);
+                  });
+                  return;
+                }
                 final repoIdx = _findInventoryRepoIndexForItem(item);
                 if (repoIdx < 0) return;
-                // Reuse StorageEditScreen for now or InventoryEditScreen if exists
                 await Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => StorageEditScreen(itemIndex: repoIdx)),
                 );
@@ -655,18 +735,23 @@ class _HomeScreenState extends State<HomeScreen>
                   });
                 }
               },
-              leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(color: Color(0xFFF5F3EE), borderRadius: BorderRadius.circular(12)),
-                  child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 24)))),
+              leading: _selectMode
+                  ? Checkbox(value: isSelected, onChanged: (v) => setState(() {
+                      if (v == true) _selectedIds.add(item.id);
+                      else _selectedIds.remove(item.id);
+                    }))
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(color: Color(0xFFF5F3EE), borderRadius: BorderRadius.circular(12)),
+                      child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 24)))),
               title: Text(item.qty == 1 ? item.name : '(${item.qty}) ${item.name}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               subtitle: Container(
                   margin: EdgeInsets.only(top: 4),
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(color: Color(0xFFF0EDE8), borderRadius: BorderRadius.circular(12)),
                   child: Text(locationLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-              trailing: Icon(Icons.chevron_right),
+              trailing: _selectMode ? null : Icon(Icons.chevron_right),
             ),
           );
         },
@@ -675,113 +760,298 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _openFilterSheet() {
-    showModalBottomSheet(
-        context: context,
-        backgroundColor: Color(0xFFDCE7FF),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-        builder: (c) {
-          return StatefulBuilder(builder: (c, setModal) {
-            return Padding(
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'filter',
+      barrierColor: Colors.black54,
+      transitionDuration: Duration(milliseconds: 250),
+      pageBuilder: (c, a1, a2) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              margin: EdgeInsets.only(top: 60, left: 12, right: 12),
+              decoration: BoxDecoration(
+                color: Color(0xFFDCE7FF),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: StatefulBuilder(builder: (c, setModal) {
+                return Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(children: [
+                          Text('FILTER & SORT',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w900, fontSize: 18)),
+                          Spacer(),
+                          IconButton(
+                              icon: Icon(Icons.close),
+                              onPressed: () => Navigator.pop(c))
+                        ]),
+                        SizedBox(height: 16),
+                        Text('SORT BY',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black54)),
+                        SizedBox(height: 8),
+                        Wrap(
+                            spacing: 8,
+                            children:
+                                ['Recent', 'Name A-Z', 'Location', 'Qty'].map((s) {
+                              final sel = _sortBy == s;
+                              return ChoiceChip(
+                                  label: Text(s),
+                                  selected: sel,
+                                  onSelected: (_) => setModal(() => _sortBy = s),
+                                  selectedColor: Color(0xFF0F1E3A),
+                                  labelStyle: TextStyle(
+                                      color: sel ? Colors.white : Colors.black));
+                            }).toList()),
+                        SizedBox(height: 16),
+                        Text('FILTER',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black54)),
+                        SizedBox(height: 8),
+                        Wrap(
+                            spacing: 8,
+                            children: [
+                              'All',
+                              'Attic',
+                              'Garage',
+                              'Shed',
+                              'Kitchen',
+                              'Office',
+                              'Important'
+                            ].map((f) {
+                              final sel = _filterBy == f;
+                              return ChoiceChip(
+                                  label: Text(f),
+                                  selected: sel,
+                                  onSelected: (_) => setModal(() => _filterBy = f),
+                                  selectedColor: Color(0xFF0F1E3A),
+                                  labelStyle: TextStyle(
+                                      color: sel ? Colors.white : Colors.black));
+                            }).toList()),
+                        SizedBox(height: 20),
+                        Row(children: [
+                          Expanded(
+                              child: OutlinedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _filterBy = 'All';
+                                      _sortBy = 'Recent';
+                                    });
+                                    Navigator.pop(c);
+                                  },
+                                  child: Text('RESET'))),
+                          SizedBox(width: 12),
+                          Expanded(
+                              child: ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {});
+                                    Navigator.pop(c);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF0F1E3A)),
+                                  child: Text('APPLY',
+                                      style: TextStyle(color: Colors.white)))),
+                        ]),
+                      ]),
+                );
+              }),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (c, anim, secAnim, child) {
+        return SlideTransition(
+          position: Tween(begin: Offset(0, -1), end: Offset(0, 0)).animate(anim),
+          child: child,
+        );
+      },
+    );
+  }
+
+  // NEW: Select actions - move & delete - all dialogs top of screen
+  Future<void> _moveSelectedItems() async {
+    if (_selectedIds.isEmpty) return;
+    final placesList = _placesFromRepo();
+    String? selectedPlace;
+    String? selectedBin;
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'move',
+      barrierColor: Colors.black54,
+      pageBuilder: (c, a1, a2) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              margin: EdgeInsets.only(top: 80, left: 16, right: 16),
               padding: EdgeInsets.all(20),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(children: [
-                      Text('FILTER & SORT',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900, fontSize: 18)),
-                      Spacer(),
-                      IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: () => Navigator.pop(c))
-                    ]),
-                    SizedBox(height: 16),
-                    Text('SORT BY',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54)),
-                    SizedBox(height: 8),
-                    Wrap(
-                        spacing: 8,
-                        children:
-                            ['Recent', 'Name A-Z', 'Location', 'Qty'].map((s) {
-                          final sel = _sortBy == s;
-                          return ChoiceChip(
-                              label: Text(s),
-                              selected: sel,
-                              onSelected: (_) => setModal(() => _sortBy = s),
-                              selectedColor: Color(0xFF0F1E3A),
-                              labelStyle: TextStyle(
-                                  color: sel ? Colors.white : Colors.black));
-                        }).toList()),
-                    SizedBox(height: 16),
-                    Text('FILTER',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54)),
-                    SizedBox(height: 8),
-                    Wrap(
-                        spacing: 8,
-                        children: [
-                          'All',
-                          'Attic',
-                          'Garage',
-                          'Shed',
-                          'Kitchen',
-                          'Office',
-                          'Important'
-                        ].map((f) {
-                          final sel = _filterBy == f;
-                          return ChoiceChip(
-                              label: Text(f),
-                              selected: sel,
-                              onSelected: (_) => setModal(() => _filterBy = f),
-                              selectedColor: Color(0xFF0F1E3A),
-                              labelStyle: TextStyle(
-                                  color: sel ? Colors.white : Colors.black));
-                        }).toList()),
-                    SizedBox(height: 20),
-                    Row(children: [
-                      Expanded(
-                          child: OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _filterBy = 'All';
-                                  _sortBy = 'Recent';
-                                });
-                                Navigator.pop(c);
-                              },
-                              child: Text('RESET'))),
-                      SizedBox(width: 12),
-                      Expanded(
-                          child: ElevatedButton(
-                              onPressed: () {
-                                setState(() {});
-                                Navigator.pop(c);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF0F1E3A)),
-                              child: Text('APPLY • $_filterBy / $_sortBy',
-                                  style: TextStyle(color: Colors.white)))),
-                    ]),
-                  ]),
-            );
-          });
-        });
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: StatefulBuilder(builder: (c2, setModal) {
+                final bins = selectedPlace == null ? <String>[] : placesList.firstWhere((p) => p.name == selectedPlace, orElse: () => Place(name: '', bins: [])).bins.map((b) => b.name).toList();
+                return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('MOVE ${ _selectedIds.length } ITEMS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(labelText: 'Place', border: OutlineInputBorder()),
+                    value: selectedPlace,
+                    items: placesList.map((p) => DropdownMenuItem(value: p.name, child: Text(p.name))).toList(),
+                    onChanged: (v) => setModal(() { selectedPlace = v; selectedBin = null; }),
+                  ),
+                  SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(labelText: 'Bin (optional)', border: OutlineInputBorder()),
+                    value: selectedBin,
+                    items: bins.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                    onChanged: (v) => setModal(() => selectedBin = v),
+                  ),
+                  SizedBox(height: 20),
+                  Row(children: [
+                    Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(c), child: Text('CANCEL'))),
+                    SizedBox(width: 12),
+                    Expanded(child: ElevatedButton(
+                      onPressed: selectedPlace == null ? null : () => Navigator.pop(c, true),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white),
+                      child: Text('MOVE'),
+                    )),
+                  ])
+                ]);
+              }),
+            ),
+          ),
+        );
+      },
+    ).then((confirmed) async {
+      if (confirmed != true || selectedPlace == null) return;
+      // Apply move for current tab items
+      if (_tabIndex == 0) {
+        for (var id in _selectedIds.toList()) {
+          final idx = _repo.storageItems.indexWhere((m) => m['id']?.toString() == id);
+          if (idx >= 0) {
+            final map = Map<String, dynamic>.from(_repo.storageItems[idx]);
+            // v5: need to resolve specificId for new place/bin
+            // For simplicity, store place/bin in old fields + try to find specificId
+            map['place'] = selectedPlace;
+            map['tier1'] = selectedPlace;
+            map['bin'] = selectedBin;
+            map['tier2'] = selectedBin;
+            // Try to find matching specificId from storageSpecifics
+            try {
+              final gen = _repo.storageGenerals.firstWhere((g) => g['name'] == selectedPlace);
+              final genId = gen['id'];
+              final spec = _repo.storageSpecifics.firstWhere((s) => s['generalId'] == genId && (s['name'] ?? '') == (selectedBin ?? ''), orElse: () => {});
+              if (spec.isNotEmpty) map['specificId'] = spec['id'];
+            } catch (_) {}
+            _repo.storageItems[idx] = map;
+          }
+        }
+        await _repo.save();
+        setState(() { items = _itemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
+      } else {
+        for (var id in _selectedIds.toList()) {
+          final idx = _repo.inventoryItems.indexWhere((m) => m['id']?.toString() == id);
+          if (idx >= 0) {
+            final map = Map<String, dynamic>.from(_repo.inventoryItems[idx]);
+            map['place'] = selectedPlace;
+            map['tier1'] = selectedPlace;
+            map['bin'] = selectedBin;
+            map['tier2'] = selectedBin;
+            try {
+              final gen = _repo.inventoryGenerals.firstWhere((g) => g['name'] == selectedPlace);
+              final genId = gen['id'];
+              final spec = _repo.inventorySpecifics.firstWhere((s) => s['generalId'] == genId && (s['name'] ?? '') == (selectedBin ?? ''), orElse: () => {});
+              if (spec.isNotEmpty) map['specificId'] = spec['id'];
+            } catch (_) {}
+            _repo.inventoryItems[idx] = map;
+          }
+        }
+        await _repo.save();
+        setState(() { inventoryItemsList = _inventoryItemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedItems() async {
+    final confirmed = await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'delete',
+      barrierColor: Colors.black54,
+      pageBuilder: (c, a1, a2) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              margin: EdgeInsets.only(top: 80, left: 16, right: 16),
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.warning_amber_rounded, size: 48, color: Colors.red),
+                SizedBox(height: 12),
+                Text('Delete ${ _selectedIds.length } items?', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                SizedBox(height: 8),
+                Text('This cannot be undone.', style: TextStyle(color: Colors.black54)),
+                SizedBox(height: 20),
+                Row(children: [
+                  Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(c, false), child: Text('CANCEL'))),
+                  SizedBox(width: 12),
+                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), child: Text('DELETE'))),
+                ])
+              ]),
+            ),
+          ),
+        );
+      },
+    );
+    if (confirmed != true) return;
+    if (_tabIndex == 0) {
+      _repo.storageItems.removeWhere((m) => _selectedIds.contains(m['id']?.toString()));
+      await _repo.save();
+      setState(() { items = _itemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
+    } else {
+      _repo.inventoryItems.removeWhere((m) => _selectedIds.contains(m['id']?.toString()));
+      await _repo.save();
+      setState(() { inventoryItemsList = _inventoryItemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
+    }
   }
 
   void _openLocationsSheet() {
-    showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-        builder: (c) {
-          return LocationsSheet(places: places);
-        });
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'locations',
+      barrierColor: Colors.black54,
+      transitionDuration: Duration(milliseconds: 250),
+      pageBuilder: (c, a1, a2) {
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              margin: EdgeInsets.only(top: 40, left: 8, right: 8),
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              child: LocationsSheet(places: places),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (c, anim, secAnim, child) {
+        return SlideTransition(position: Tween(begin: Offset(0, -1), end: Offset(0, 0)).animate(anim), child: child);
+      },
+    );
   }
 }
 

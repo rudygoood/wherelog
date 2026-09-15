@@ -11,14 +11,14 @@ class StorageEditScreen extends StatefulWidget {
 }
 
 class _StorageEditScreenState extends State<StorageEditScreen> {
-  final tier1Controller = TextEditingController();
-  final tier2Controller = TextEditingController();
+  final generalController = TextEditingController();
+  final specificController = TextEditingController();
   final itemNameController = TextEditingController();
   final notesController = TextEditingController();
   final qtyController = TextEditingController(text: '1');
   final valueController = TextEditingController();
-  final tier1Focus = FocusNode();
-  final tier2Focus = FocusNode();
+  final generalFocus = FocusNode();
+  final specificFocus = FocusNode();
   File? photoFile;
   String? existingPhotoPath;
   Map<String, dynamic>? _originalItem;
@@ -26,16 +26,16 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
   final _locationRepo = LocationRepository();
   bool _isLoading = true;
 
-  List<String> get storageTier1List => _locationRepo.storageTier1List;
-  List<String> getTier2ForCurrentTier1() {
-    final p = tier1Controller.text.trim();
+  List<String> get storageGeneralList => _locationRepo.storageTier1List;
+  List<String> getSpecificsForCurrentGeneral() {
+    final p = generalController.text.trim();
     if (p.isEmpty) return [];
     return _locationRepo.storageTier2For(p);
   }
-  bool isDuplicateTier1(String name) => _locationRepo.isDuplicateStorageTier1(name);
-  bool isDuplicateTier2(String parent, String name) => _locationRepo.isDuplicateStorageTier2(parent, name);
+  bool isDuplicateGeneral(String name) => _locationRepo.isDuplicateStorageTier1(name);
+  bool isDuplicateSpecific(String parent, String name) => _locationRepo.isDuplicateStorageTier2(parent, name);
 
-  String? findSimilarTier2(String parent, String newName) {
+  String? findSimilarSpecific(String parent, String newName) {
     final list = _locationRepo.storageData[parent] ?? [];
     final nl = newName.toLowerCase();
     for (final ex in list) {
@@ -82,29 +82,30 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     }
   }
 
-  Future<void> addTier1(String name) async {
+  Future<void> addGeneral(String name) async {
     final t = name.trim();
-    if (t.isEmpty || isDuplicateTier1(t)) return;
+    if (t.isEmpty || isDuplicateGeneral(t)) return;
     await _locationRepo.addStorageTier1(t);
     setState(() {});
-    showCenterNotice('Added Place: $t');
+    showCenterNotice('Added General: $t');
   }
 
-  Future<void> addTier2(String parent, String name) async {
+  Future<void> addSpecific(String parent, String name) async {
     final p = parent.trim();
     final t = name.trim();
-    if (p.isEmpty || t.isEmpty || isDuplicateTier2(p, t)) return;
+    if (p.isEmpty || t.isEmpty || isDuplicateSpecific(p, t)) return;
     await _locationRepo.addStorageTier2(p, t);
     setState(() {});
-    showCenterNotice('Added Bin: $t for $p');
+    showCenterNotice('Added Specific: $t for $p');
   }
 
-  String get concatenatedLocation {
-    final t1 = tier1Controller.text.trim();
-    final t2 = tier2Controller.text.trim();
-    if (t1.isNotEmpty && t2.isNotEmpty) return '$t1 / $t2';
-    return t1.isNotEmpty ? t1 : t2;
+  String get fullLocationDisplay {
+    final g = generalController.text.trim();
+    final s = specificController.text.trim();
+    if (g.isNotEmpty && s.isNotEmpty) return '$g / $s';
+    return g.isNotEmpty ? g : s;
   }
+  String get concatenatedLocation => fullLocationDisplay;
 
   Map<String, dynamic> _initialSnapshot = {};
 
@@ -112,8 +113,8 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     if (_originalItem == null) return false;
     final current = {
       'name': itemNameController.text.trim(),
-      'tier1': tier1Controller.text.trim(),
-      'tier2': tier2Controller.text.trim(),
+      'general': generalController.text.trim(),
+      'specific': specificController.text.trim(),
       'notes': notesController.text.trim(),
       'qty': qtyController.text.trim(),
       'value': valueController.text.trim(),
@@ -121,8 +122,8 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     };
     final orig = _initialSnapshot;
     return current['name'] != orig['name'] ||
-        current['tier1'] != orig['tier1'] ||
-        current['tier2'] != orig['tier2'] ||
+        current['general'] != orig['general'] ||
+        current['specific'] != orig['specific'] ||
         current['notes'] != orig['notes'] ||
         current['qty'] != orig['qty'] ||
         current['value'] != orig['value'] ||
@@ -148,27 +149,50 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
   @override
   void initState() {
     super.initState();
-    tier1Controller.addListener(() => setState(() {}));
-    tier2Controller.addListener(() => setState(() {}));
-    tier1Focus.addListener(() => setState(() {}));
-    tier2Focus.addListener(() => setState(() {}));
+    generalController.addListener(() => setState(() {}));
+    specificController.addListener(() => setState(() {}));
+    generalFocus.addListener(() => setState(() {}));
+    specificFocus.addListener(() => setState(() {}));
     _locationRepo.load().then((_) {
       if (_locationRepo.storageItems.length > widget.itemIndex) {
         final item = _locationRepo.storageItems[widget.itemIndex];
         _originalItem = Map<String, dynamic>.from(item);
-        tier1Controller.text = (item['tier1'] ?? item['place'] ?? '').toString();
-        tier2Controller.text = (item['tier2'] ?? item['bin'] ?? '').toString();
+
+        // v5: try to resolve general/specific from specificId first (stable JSON)
+        String gName = '';
+        String sName = '';
+        final specId = (item['specificId'] ?? '').toString();
+        if (specId.isNotEmpty) {
+          try {
+            final spec = _locationRepo.storageSpecifics.firstWhere((s) => s['id'] == specId, orElse: () => {});
+            sName = (spec['name'] ?? '').toString();
+            final genId = spec['generalId']?.toString() ?? '';
+            if (genId.isNotEmpty) {
+              final gen = _locationRepo.storageGenerals.firstWhere((g) => g['id'] == genId, orElse: () => {});
+              gName = (gen['name'] ?? '').toString();
+            }
+          } catch (_) {}
+        }
+        if (gName.isEmpty) {
+          gName = (item['general'] ?? item['tier1'] ?? item['place'] ?? '').toString();
+        }
+        if (sName.isEmpty) {
+          sName = (item['specific'] ?? item['tier2'] ?? item['bin'] ?? '').toString();
+        }
+
+        generalController.text = gName;
+        specificController.text = sName;
         itemNameController.text = (item['name'] ?? '').toString();
         notesController.text = (item['notes'] ?? '').toString();
         final q = item['qty'] ?? item['quantity'] ?? 1;
         qtyController.text = q.toString();
         final vAmt = item['valueAmount'] ?? (item['value'] != null ? item['value'].toString() : '');
         valueController.text = vAmt.toString();
-        existingPhotoPath = item['photo']?.toString();
+        existingPhotoPath = (item['photoPath'] ?? item['photo'])?.toString();
         _initialSnapshot = {
           'name': itemNameController.text.trim(),
-          'tier1': tier1Controller.text.trim(),
-          'tier2': tier2Controller.text.trim(),
+          'general': generalController.text.trim(),
+          'specific': specificController.text.trim(),
           'notes': notesController.text.trim(),
           'qty': qtyController.text.trim(),
           'value': valueController.text.trim(),
@@ -181,10 +205,10 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
 
   @override
   void dispose() {
-    tier1Focus.dispose();
-    tier2Focus.dispose();
-    tier1Controller.dispose();
-    tier2Controller.dispose();
+    generalFocus.dispose();
+    specificFocus.dispose();
+    generalController.dispose();
+    specificController.dispose();
     itemNameController.dispose();
     notesController.dispose();
     qtyController.dispose();
@@ -192,63 +216,95 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     super.dispose();
   }
 
-  Future<void> openTier1Picker() async {
+  Future<void> openGeneralPicker() async {
     final r = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (c) => _TierPickerSheet(
-        title: 'General - Place',
-        existing: storageTier1List,
-        hint: 'Search or type new Place',
+      builder: (c) => _GeneralSpecificPickerSheet(
+        title: 'General',
+        existing: storageGeneralList,
+        hint: 'Search or type new General',
         allowBlank: false,
-        onAddNew: (name) => addTier1(name),
-        isDuplicate: isDuplicateTier1,
+        onAddNew: (name) => addGeneral(name),
+        isDuplicate: isDuplicateGeneral,
       ),
     );
-    if (r != null) setState(() => tier1Controller.text = r);
+    if (r != null) setState(() => generalController.text = r);
   }
 
-  Future<void> openTier2Picker() async {
-    if (tier1Controller.text.trim().isEmpty) return;
-    final parent = tier1Controller.text.trim();
+  Future<void> openSpecificPicker() async {
+    if (generalController.text.trim().isEmpty) return;
+    final parent = generalController.text.trim();
     final r = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (c) => _TierPickerSheet(
-        title: 'Specific - Bin for $parent',
-        existing: getTier2ForCurrentTier1(),
-        hint: 'Search or type new Bin',
+      builder: (c) => _GeneralSpecificPickerSheet(
+        title: 'Specific for $parent',
+        existing: getSpecificsForCurrentGeneral(),
+        hint: 'Search or type new Specific',
         allowBlank: true,
-        onAddNew: (name) => addTier2(parent, name),
-        isDuplicate: (name) => isDuplicateTier2(parent, name),
+        onAddNew: (name) => addSpecific(parent, name),
+        isDuplicate: (name) => isDuplicateSpecific(parent, name),
       ),
     );
-    if (r != null) setState(() => tier2Controller.text = r);
+    if (r != null) setState(() => specificController.text = r);
   }
+
+  Future<void> openTier1Picker() => openGeneralPicker();
+  Future<void> openTier2Picker() => openSpecificPicker();
 
   Future<void> handleSave() async {
     if (itemNameController.text.trim().isEmpty) {
       showCenterNotice('Enter Stored Item');
       return;
     }
-    if (tier1Controller.text.trim().isEmpty) {
-      showCenterNotice('Pick General location');
+    if (generalController.text.trim().isEmpty) {
+      showCenterNotice('Pick General');
       return;
     }
-    final loc = concatenatedLocation.isEmpty ? tier1Controller.text.trim() : concatenatedLocation;
+    final loc = fullLocationDisplay.isEmpty ? generalController.text.trim() : fullLocationDisplay;
     final savedName = itemNameController.text.trim();
     final qty = int.tryParse(qtyController.text.trim()) ?? 1;
     final valueText = valueController.text.trim();
     final valueAmt = double.tryParse(valueText.replaceAll('\$', '').trim());
+
+    // resolve IDs for stable JSON
+    String generalId = '';
+    String specificId = '';
+    try {
+      final gName = generalController.text.trim();
+      final sName = specificController.text.trim();
+      final gen = _locationRepo.storageGenerals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
+      generalId = gen['id']?.toString() ?? '';
+      if (sName.isNotEmpty) {
+        final spec = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
+        specificId = spec['id']?.toString() ?? '';
+        if (specificId.isEmpty) {
+          await _locationRepo.addStorageTier2(gName, sName);
+          final spec2 = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
+          specificId = spec2['id']?.toString() ?? '';
+        }
+      } else {
+        final sentinel = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').isEmpty, orElse: () => {});
+        specificId = sentinel['id']?.toString() ?? '';
+      }
+    } catch (_) {}
+
     final orig = _originalItem ?? {};
+    final nowIso = DateTime.now().toIso8601String();
     final updated = {
+      'id': orig['id'],
       'name': savedName,
-      'tier1': tier1Controller.text.trim(),
-      'tier2': tier2Controller.text.trim(),
-      'place': tier1Controller.text.trim(),
-      'bin': tier2Controller.text.trim(),
+      'generalId': generalId,
+      'specificId': specificId,
+      'general': generalController.text.trim(),
+      'specific': specificController.text.trim(),
+      'tier1': generalController.text.trim(),
+      'tier2': specificController.text.trim(),
+      'place': generalController.text.trim(),
+      'bin': specificController.text.trim(),
       'location': loc,
       'qty': qty,
       'quantity': qty,
@@ -256,10 +312,11 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
       'valueAmount': valueText,
       'notes': notesController.text.trim(),
       'photo': photoFile?.path ?? existingPhotoPath,
-      'createdAt': orig['createdAt'] ?? DateTime.now().toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
+      'photoPath': photoFile?.path ?? existingPhotoPath,
+      'createdAt': orig['createdAt'] ?? nowIso,
+      'modifyDate': nowIso,
+      'updatedAt': nowIso,
     };
-    // Preserve any extra fields not explicitly edited
     for (final k in orig.keys) {
       if (!updated.containsKey(k)) {
         updated[k] = orig[k];
@@ -350,10 +407,10 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     final filter = controller.text.toLowerCase().trim();
     final filtered = filter.isEmpty ? existing : existing.where((e) => e.toLowerCase().contains(filter)).toList();
     final showDropdown = focusNode.hasFocus && filtered.isNotEmpty;
-    final bool canAdd = controller.text.trim().isNotEmpty && (isTier1 ? !isDuplicateTier1(controller.text.trim()) : !isDuplicateTier2(tier1Controller.text.trim(), controller.text.trim()));
+    final bool canAdd = controller.text.trim().isNotEmpty && (isTier1 ? !isDuplicateGeneral(controller.text.trim()) : !isDuplicateSpecific(generalController.text.trim(), controller.text.trim()));
     String? similar;
     if (!isTier1 && controller.text.trim().isNotEmpty) {
-      similar = findSimilarTier2(tier1Controller.text.trim(), controller.text.trim());
+      similar = findSimilarSpecific(generalController.text.trim(), controller.text.trim());
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,7 +568,6 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     );
   }
 
-
   Widget buildPhotoBoxSquare() {
     final File? existingFile = (existingPhotoPath != null && existingPhotoPath!.isNotEmpty) ? File(existingPhotoPath!) : null;
     final bool existingExists = existingFile != null && existingFile.existsSync();
@@ -575,9 +631,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     );
   }
 
-  // Keep old name as alias for any legacy calls
   Widget buildPhotoBox() => buildPhotoBoxSquare();
-
 
   @override
   Widget build(BuildContext context) {
@@ -604,23 +658,17 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     }
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
+      onPopInvoked: (didPop) async {
         if (didPop) return;
-        final shouldPop = await _confirmDiscard();
-        if (shouldPop && mounted) Navigator.pop(context);
+        final ok = await _confirmDiscard();
+        if (ok && context.mounted) Navigator.pop(context);
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F3EE),
         appBar: AppBar(
           backgroundColor: const Color(0xFFF5F3EE),
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black87),
-            onPressed: () async {
-              final ok = await _confirmDiscard();
-              if (ok && mounted) Navigator.pop(context);
-            },
-          ),
+          leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black87), onPressed: () async { final ok = await _confirmDiscard(); if (ok && context.mounted) Navigator.pop(context); }),
           title: RichText(
             text: TextSpan(
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
@@ -631,184 +679,73 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
               ],
             ),
           ),
-          actions: [
-            IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), tooltip: 'Delete', onPressed: handleDelete),
-          ],
+          actions: [IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: handleDelete)],
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black26), borderRadius: BorderRadius.circular(8)),
-                child: Text('Location: ${concatenatedLocation.isEmpty ? '—' : concatenatedLocation}', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
-              ),
-              const SizedBox(height: 10),
-              const Text('GENERAL AREA (required)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-              const SizedBox(height: 4),
-              buildLocationField(
-                controller: tier1Controller,
-                focusNode: tier1Focus,
-                hint: 'e.g. Garage, Attic',
-                isTier1: true,
-                enabled: true,
-                onPickerTap: openTier1Picker,
-                onAddTap: () => addTier1(tier1Controller.text.trim()),
-                existing: storageTier1List,
-              ),
-              const SizedBox(height: 12),
-              const Text('SPECIFIC AREA (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-              const SizedBox(height: 4),
-              buildLocationField(
-                controller: tier2Controller,
-                focusNode: tier2Focus,
-                hint: 'e.g. Bin 1, Shelf A (optional)',
-                isTier1: false,
-                enabled: tier1Controller.text.trim().isNotEmpty,
-                onPickerTap: openTier2Picker,
-                onAddTap: () => addTier2(tier1Controller.text.trim(), tier2Controller.text.trim()),
-                existing: getTier2ForCurrentTier1(),
-              ),
-              const SizedBox(height: 16),
-              const Text('ITEM NAME (required)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-              const SizedBox(height: 4),
-              TextField(
-                controller: itemNameController,
-                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Compact square thumbnail (half-width) beside vertically stacked QTY / VALUE
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Square thumbnail - half width, square aspect, distinct placeholder using app_icon
-                  Expanded(
-                    flex: 3,
-                    child: AspectRatio(
-                      aspectRatio: 1, // consistent square based on half-width
-                      child: buildPhotoBoxSquare(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Vertically stacked QTY and VALUE - occupies other half
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                        const SizedBox(height: 4),
-                        TextField(
-                          controller: qtyController,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            isDense: true,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text('VALUE (\$)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                        const SizedBox(height: 4),
-                        TextField(
-                          controller: valueController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.attach_money, size: 18),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            isDense: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  const Text('NOTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
-                  Spacer(),
-                  InkWell(
-                    onTap: openNotesEditor,
-                    borderRadius: BorderRadius.circular(6),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      child: Row(children: [Icon(Icons.open_in_full, size: 14, color: Colors.black54), SizedBox(width: 4), Text('Expand', style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600))]),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              TextField(controller: notesController, minLines: 3, maxLines: 3, style: const TextStyle(color: Colors.black87), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white)),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 44,
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          final ok = await _confirmDiscard();
-                          if (ok && mounted) Navigator.pop(context);
-                        },
-                        style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: handleSave,
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(8)),
+              child: Text('Location: ${fullLocationDisplay.isEmpty ? '—' : fullLocationDisplay}', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+            ),
+            const SizedBox(height: 10),
+            const Text('GENERAL (required)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+            const SizedBox(height: 4),
+            buildLocationField(controller: generalController, focusNode: generalFocus, hint: 'e.g. Garage, Attic', isTier1: true, enabled: true, onPickerTap: openGeneralPicker, onAddTap: () => addGeneral(generalController.text.trim()), existing: storageGeneralList),
+            const SizedBox(height: 12),
+            const Text('SPECIFIC (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+            const SizedBox(height: 4),
+            buildLocationField(controller: specificController, focusNode: specificFocus, hint: 'e.g. Bin 1, Shelf A (optional)', isTier1: false, enabled: generalController.text.trim().isNotEmpty, onPickerTap: openSpecificPicker, onAddTap: () => addSpecific(generalController.text.trim(), specificController.text.trim()), existing: getSpecificsForCurrentGeneral()),
+            const SizedBox(height: 18),
+            const Text('ITEM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
+            const SizedBox(height: 4),
+            TextField(controller: itemNameController, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white)),
+            const SizedBox(height: 14),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(flex: 3, child: AspectRatio(aspectRatio: 1, child: buildPhotoBoxSquare())),
+              const SizedBox(width: 12),
+              Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+                const SizedBox(height: 4),
+                TextField(controller: qtyController, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white, contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), isDense: true)),
+                const SizedBox(height: 12),
+                const Text('VALUE (\$)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+                const SizedBox(height: 4),
+                TextField(controller: valueController, keyboardType: const TextInputType.numberWithOptions(decimal: true), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600), decoration: InputDecoration(prefixIcon: const Icon(Icons.attach_money, size: 18), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white, contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), isDense: true)),
+              ])),
+            ]),
+            const SizedBox(height: 14),
+            const Text('NOTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
+            const SizedBox(height: 4),
+            TextField(controller: notesController, minLines: 3, maxLines: 3, style: const TextStyle(color: Colors.black87), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white)),
+            const SizedBox(height: 20),
+            Row(children: [
+              Expanded(child: SizedBox(height: 44, child: OutlinedButton(onPressed: () async { final ok = await _confirmDiscard(); if (ok && mounted) Navigator.pop(context); }, child: const Text('Cancel')))),
+              const SizedBox(width: 12),
+              Expanded(child: SizedBox(height: 44, child: ElevatedButton(onPressed: handleSave, style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white), child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold))))),
+            ]),
+          ]),
         ),
       ),
     );
   }
 }
 
-
-class _TierPickerSheet extends StatefulWidget {
+class _GeneralSpecificPickerSheet extends StatefulWidget {
   final String title;
   final List<String> existing;
   final String hint;
   final bool allowBlank;
   final void Function(String) onAddNew;
   final bool Function(String) isDuplicate;
-  const _TierPickerSheet({required this.title, required this.existing, required this.hint, required this.allowBlank, required this.onAddNew, required this.isDuplicate});
+  const _GeneralSpecificPickerSheet({required this.title, required this.existing, required this.hint, required this.allowBlank, required this.onAddNew, required this.isDuplicate});
   @override
-  State<_TierPickerSheet> createState() => _TierPickerSheetState();
+  State<_GeneralSpecificPickerSheet> createState() => _GeneralSpecificPickerSheetState();
 }
 
-class _TierPickerSheetState extends State<_TierPickerSheet> {
+class _GeneralSpecificPickerSheetState extends State<_GeneralSpecificPickerSheet> {
   late TextEditingController searchController;
   String filter = '';
   @override
@@ -817,7 +754,6 @@ class _TierPickerSheetState extends State<_TierPickerSheet> {
     searchController = TextEditingController();
     searchController.addListener(() => setState(() => filter = searchController.text));
   }
-
   @override
   Widget build(BuildContext context) {
     final filtered = widget.existing.where((e) => filter.isEmpty || e.toLowerCase().contains(filter.toLowerCase())).toList();
@@ -833,26 +769,9 @@ class _TierPickerSheetState extends State<_TierPickerSheet> {
           Row(children: [Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), const Spacer(), IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))]),
           TextField(controller: searchController, decoration: InputDecoration(hintText: widget.hint, prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
           const SizedBox(height: 8),
-          if (canAdd)
-            ListTile(
-              leading: const Icon(Icons.add, color: Colors.black87),
-              title: Text('Add "$filter" as new', style: const TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                widget.onAddNew(filter.trim());
-                Navigator.pop(context, filter.trim());
-              },
-            ),
+          if (canAdd) ListTile(leading: const Icon(Icons.add, color: Colors.black87), title: Text('Add "$filter" as new', style: const TextStyle(fontWeight: FontWeight.bold)), onTap: () { widget.onAddNew(filter.trim()); Navigator.pop(context, filter.trim()); }),
           if (widget.allowBlank) ListTile(title: const Text('(None)'), onTap: () => Navigator.pop(context, '')),
-          Expanded(
-            child: ListView.builder(
-              controller: scroll,
-              itemCount: filtered.length,
-              itemBuilder: (c, i) {
-                final e = filtered[i];
-                return ListTile(title: Text(e), onTap: () => Navigator.pop(context, e));
-              },
-            ),
-          ),
+          Expanded(child: ListView.builder(controller: scroll, itemCount: filtered.length, itemBuilder: (c, i) => ListTile(title: Text(filtered[i]), onTap: () => Navigator.pop(context, filtered[i])))),
         ]),
       ),
     );

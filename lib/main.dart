@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'screens/storage_add_screen.dart';
 import 'screens/storage_edit_screen.dart';
+import 'screens/inventory_add_screen.dart';
+import 'screens/inventory_edit_screen.dart';
+import 'screens/poi_add_screen.dart';
+import 'screens/poi_edit_screen.dart';
 import 'location_repository.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -152,6 +156,9 @@ class _HomeScreenState extends State<HomeScreen>
   Set<String> _selectedIds = {};
   final TextEditingController _searchController = TextEditingController();
   final LocationRepository _repo = LocationRepository();
+  double? currentLat;
+  double? currentLng;
+  bool _isLoadingLocation = false;
 
   List<Place> places = [];
   List<Item> items = [];
@@ -342,6 +349,34 @@ class _HomeScreenState extends State<HomeScreen>
     }).toList();
   }
 
+  Future<void> fetchCurrentForDistance() async {
+    setState(() => _isLoadingLocation = true);
+    try { await Future.delayed(const Duration(milliseconds: 300)); }
+    finally { if (mounted) setState(() => _isLoadingLocation = false); }
+  }
+
+  double? calcDistanceMeters(double? lat, double? lng) {
+    if (currentLat == null || currentLng == null || lat == null || lng == null) return null;
+    return null;
+  }
+
+  String formatDistance(double? meters) {
+    if (meters == null) return '';
+    if (meters < 1000) return '${meters.toStringAsFixed(0)} m';
+    final km = meters / 1000;
+    final miles = meters / 1609.34;
+    return '${km.toStringAsFixed(1)} km / ${miles.toStringAsFixed(1)} mi';
+  }
+
+  int _findPoiRepoIndex(Map<String, dynamic> poi) {
+    final id = poi['id']?.toString();
+    if (id == null) return -1;
+    for (int i=0; i<_repo.poiItems.length; i++) {
+      if (_repo.poiItems[i]['id']?.toString() == id) return i;
+    }
+    return -1;
+  }
+
   int _findInventoryRepoIndexForItem(Item item) {
     int idx = _repo.inventoryItems.indexWhere((m) => m['id']?.toString() == item.id);
     if (idx >= 0) return idx;
@@ -394,6 +429,19 @@ class _HomeScreenState extends State<HomeScreen>
     return list;
   }
 
+
+  List<Map<String, dynamic>> get filteredPoiItems {
+    var list = _repo.poiItems.where((m) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      final name = (m['name'] ?? '').toString().toLowerCase();
+      final addr = (m['address'] ?? '').toString().toLowerCase();
+      final notes = (m['notes'] ?? '').toString().toLowerCase();
+      return name.contains(q) || addr.contains(q) || notes.contains(q);
+    }).toList();
+    if (_sortBy == 'Name A-Z') list.sort((a,b) => (a['name']??'').toString().compareTo((b['name']??'').toString()));
+    return list;
+  }
 
   List<Item> get filteredInventoryItems {
     var list = inventoryItemsList.where((i) {
@@ -471,18 +519,18 @@ class _HomeScreenState extends State<HomeScreen>
         if (_tabIndex == 0 || _tabIndex == 1) _buildSearchFilterBar(),
         Expanded(
             child: TabBarView(controller: _tabController, children: [
-          _buildStorageList(),
-          _buildInventoryList(),
-          Center(child: Text('POI - coming next')),
+          _buildStorageTab(),
+          _buildInventoryTab(),
+          _buildPoiTab(),
         ])),
       ]),
-      bottomNavigationBar: Container(
-        color: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: SafeArea(
-            child: _selectMode ? _buildSelectBottomBar() : _buildNormalBottomBar()
-        ),
-      ),
+      bottomNavigationBar: _selectMode
+          ? Container(
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: SafeArea(child: _buildSelectBottomBar()),
+            )
+          : null,
     );
   }
 
@@ -548,22 +596,134 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildNormalBottomBar() {
+  // === MULTIPLE SETS OF BUTTONS RESIDING ON TABS - each tab owns its own set ===
+  Widget _buildStorageTab() {
+    return Container(
+      color: Color(0xFFF5F3EE),
+      child: Column(children: [
+        Expanded(child: _buildStorageList()),
+        _buildStorageActionBar(),
+      ]),
+    );
+  }
 
-    return Row(children: [
+  Widget _buildInventoryTab() {
+    return Container(
+      color: Color(0xFFF5F3EE),
+      child: Column(children: [
+        Expanded(child: _buildInventoryList()),
+        _buildInventoryActionBar(),
+      ]),
+    );
+  }
+
+  Widget _buildPoiTab() {
+    return Container(
+      color: Color(0xFFF5F3EE),
+      child: Column(children: [
+        Expanded(child: _buildPoiList()),
+        _buildPoiActionBar(),
+      ]),
+    );
+  }
+
+  Widget _buildPoiList() {
+    return Container(
+      color: Color(0xFFF5F3EE),
+      child: Column(
+        children: [
+          if (currentLat != null)
+            Padding(
+              padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Row(children: [
+                Icon(Icons.my_location, size: 14, color: Colors.blue),
+                SizedBox(width: 4),
+                Text('Distance from: ${currentLat!.toStringAsFixed(4)}, ${currentLng!.toStringAsFixed(4)}', style: TextStyle(fontSize: 10, color: Colors.black54)),
+                Spacer(),
+                InkWell(onTap: () => setState(() { currentLat = null; currentLng = null; }), child: Text('Clear', style: TextStyle(fontSize: 10, color: Colors.blue))),
+              ]),
+            ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isLoadingLocation ? null : fetchCurrentForDistance,
+                  icon: _isLoadingLocation ? SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(Icons.near_me, size: 16),
+                  label: Text('Calc Distance from Current', style: TextStyle(fontSize: 11)),
+                  style: OutlinedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 8)),
+                ),
+              ),
+            ]),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
+              itemCount: filteredPoiItems.length,
+              itemBuilder: (c, i) {
+                final poi = filteredPoiItems[i];
+                final name = (poi['name'] ?? 'Unnamed').toString();
+                final lat = (poi['lat'] is num) ? (poi['lat'] as num).toDouble() : double.tryParse(poi['lat']?.toString() ?? '');
+                final lng = (poi['lng'] is num) ? (poi['lng'] as num).toDouble() : double.tryParse(poi['lng']?.toString() ?? '');
+                final coords = (lat != null && lng != null) ? '${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}' : 'No GPS';
+                final address = (poi['address'] ?? '').toString();
+                final distM = calcDistanceMeters(lat, lng);
+                final distStr = formatDistance(distM);
+                return Card(
+                  margin: EdgeInsets.only(bottom: 8),
+                  color: Color(0xFFFAF6F0),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.black12)),
+                  child: ListTile(
+                    onTap: () async {
+                      final repoIdx = _findPoiRepoIndex(poi);
+                      if (repoIdx < 0) return;
+                      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PoiEditScreen(itemIndex: repoIdx)));
+                      if (mounted) {
+                        await _repo.load();
+                        setState(() {});
+                      }
+                    },
+                    leading: Container(width: 48, height: 48, decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.location_on, color: Colors.blue.shade700)),
+                    title: Text(name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                    subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      SizedBox(height: 4),
+                      Container(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Color(0xFFF0EDE8), borderRadius: BorderRadius.circular(12)), child: Text(coords, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'monospace'))),
+                      if (distStr.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Container(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(8)), child: Text(distStr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade700)))),
+                      if (address.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Text(address, style: TextStyle(fontSize: 11, color: Colors.black54), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    ]),
+                    trailing: Icon(Icons.chevron_right),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStorageActionBar() {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SafeArea(
+        child: Row(children: [
           Expanded(
               child: OutlinedButton(
+                  key: ValueKey('storage_select'),
                   onPressed: () => setState(() {
-                    _selectMode = true;
-                    _selectedIds.clear();
-                  }),
-                  child: Text(_selectMode ? 'CANCEL SELECT' : 'SELECT'),
+                        _selectMode = true;
+                        _selectedIds.clear();
+                      }),
+                  child: Text('SELECT'),
                   style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: Colors.black)))),
           SizedBox(width: 12),
           Expanded(
               child: ElevatedButton.icon(
+                  key: ValueKey('storage_add_item'),
                   onPressed: () async {
                     await Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => StorageAddScreen()));
@@ -577,12 +737,101 @@ class _HomeScreenState extends State<HomeScreen>
                     }
                   },
                   icon: Icon(Icons.add),
-                  label: Text('ITEM'),
+                  label: Text('STORAGE ITEM'),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(vertical: 16)))),
-        ]);
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildInventoryActionBar() {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SafeArea(
+        child: Row(children: [
+          Expanded(
+              child: OutlinedButton(
+                  key: ValueKey('inventory_select'),
+                  onPressed: () => setState(() {
+                        _selectMode = true;
+                        _selectedIds.clear();
+                      }),
+                  child: Text('SELECT'),
+                  style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: Colors.black)))),
+          SizedBox(width: 12),
+          Expanded(
+              child: ElevatedButton.icon(
+                  key: ValueKey('inventory_add_item'),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => InventoryAddScreen()));
+                    if (mounted) {
+                      await _repo.load();
+                      setState(() {
+                        places = _placesFromRepo();
+                        items = _itemsFromRepo();
+                        inventoryItemsList = _inventoryItemsFromRepo();
+                      });
+                    }
+                  },
+                  icon: Icon(Icons.add),
+                  label: Text('INVENTORY ITEM'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16)))),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildPoiActionBar() {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SafeArea(
+        child: Row(children: [
+          Expanded(
+              child: OutlinedButton(
+                  onPressed: () => setState(() {
+                        _selectMode = true;
+                        _selectedIds.clear();
+                      }),
+                  child: Text('SELECT'),
+                  style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: Colors.black)))),
+          SizedBox(width: 12),
+          Expanded(
+              child: ElevatedButton.icon(
+                  key: ValueKey('poi_add_item'),
+                  onPressed: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PoiAddScreen()));
+                    if (mounted) {
+                      await _repo.load();
+                      setState(() {});
+                    }
+                  },
+                  icon: Icon(Icons.add),
+                  label: Text('POI ITEM'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16)))),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildNormalBottomBar() {
+    // Deprecated - buttons now reside on tabs per instruction
+    return SizedBox.shrink();
   }
 
   Widget _buildSelectBottomBar() {
@@ -725,7 +974,7 @@ class _HomeScreenState extends State<HomeScreen>
                 final repoIdx = _findInventoryRepoIndexForItem(item);
                 if (repoIdx < 0) return;
                 await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => StorageEditScreen(itemIndex: repoIdx)),
+                  MaterialPageRoute(builder: (_) => InventoryEditScreen(itemIndex: repoIdx)),
                 );
                 if (mounted) {
                   await _repo.load();

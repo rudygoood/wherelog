@@ -10,29 +10,31 @@ class StorageAddScreen extends StatefulWidget {
 }
 
 class _StorageAddScreenState extends State<StorageAddScreen> {
-  final tier1Controller = TextEditingController();
-  final tier2Controller = TextEditingController();
+  // RENAMED: tier1/tier2 -> general/specific (JSON stays v5: storageGenerals/storageSpecifics/specificId)
+  final generalController = TextEditingController();
+  final specificController = TextEditingController();
   final itemNameController = TextEditingController();
   final notesController = TextEditingController();
   final qtyController = TextEditingController(text: '1');
   final valueController = TextEditingController();
-  final tier1Focus = FocusNode();
-  final tier2Focus = FocusNode();
+  final generalFocus = FocusNode();
+  final specificFocus = FocusNode();
   List<String> addedItemsLog = [];
   File? photoFile;
   final _picker = ImagePicker();
   final _locationRepo = LocationRepository();
 
-  List<String> get storageTier1List => _locationRepo.storageTier1List;
-  List<String> getTier2ForCurrentTier1() {
-    final p = tier1Controller.text.trim();
+  // Backward compat getters map to v5 repo methods
+  List<String> get storageGeneralList => _locationRepo.storageTier1List;
+  List<String> getSpecificsForCurrentGeneral() {
+    final p = generalController.text.trim();
     if (p.isEmpty) return [];
     return _locationRepo.storageTier2For(p);
   }
-  bool isDuplicateTier1(String name) => _locationRepo.isDuplicateStorageTier1(name);
-  bool isDuplicateTier2(String parent, String name) => _locationRepo.isDuplicateStorageTier2(parent, name);
+  bool isDuplicateGeneral(String name) => _locationRepo.isDuplicateStorageTier1(name);
+  bool isDuplicateSpecific(String parent, String name) => _locationRepo.isDuplicateStorageTier2(parent, name);
 
-  String? findSimilarTier2(String parent, String newName) {
+  String? findSimilarSpecific(String parent, String newName) {
     final list = _locationRepo.storageData[parent] ?? [];
     final nl = newName.toLowerCase();
     for (final ex in list) {
@@ -79,46 +81,49 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     }
   }
 
-  Future<void> addTier1(String name) async {
+  Future<void> addGeneral(String name) async {
     final t = name.trim();
-    if (t.isEmpty || isDuplicateTier1(t)) return;
+    if (t.isEmpty || isDuplicateGeneral(t)) return;
     await _locationRepo.addStorageTier1(t);
     setState(() {});
-    showCenterNotice('Added Place: $t');
+    showCenterNotice('Added General: $t');
   }
 
-  Future<void> addTier2(String parent, String name) async {
+  Future<void> addSpecific(String parent, String name) async {
     final p = parent.trim();
     final t = name.trim();
-    if (p.isEmpty || t.isEmpty || isDuplicateTier2(p, t)) return;
+    if (p.isEmpty || t.isEmpty || isDuplicateSpecific(p, t)) return;
     await _locationRepo.addStorageTier2(p, t);
     setState(() {});
-    showCenterNotice('Added Bin: $t for $p');
+    showCenterNotice('Added Specific: $t for $p');
   }
 
-  String get concatenatedLocation {
-    final t1 = tier1Controller.text.trim();
-    final t2 = tier2Controller.text.trim();
-    if (t1.isNotEmpty && t2.isNotEmpty) return '$t1 / $t2';
-    return t1.isNotEmpty ? t1 : t2;
+  String get fullLocationDisplay {
+    final g = generalController.text.trim();
+    final s = specificController.text.trim();
+    if (g.isNotEmpty && s.isNotEmpty) return '$g / $s';
+    return g.isNotEmpty ? g : s;
   }
+
+  // legacy alias for old calls
+  String get concatenatedLocation => fullLocationDisplay;
 
   @override
   void initState() {
     super.initState();
     _locationRepo.load().then((_) => setState(() {}));
-    tier1Controller.addListener(() => setState(() {}));
-    tier2Controller.addListener(() => setState(() {}));
-    tier1Focus.addListener(() => setState(() {}));
-    tier2Focus.addListener(() => setState(() {}));
+    generalController.addListener(() => setState(() {}));
+    specificController.addListener(() => setState(() {}));
+    generalFocus.addListener(() => setState(() {}));
+    specificFocus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    tier1Focus.dispose();
-    tier2Focus.dispose();
-    tier1Controller.dispose();
-    tier2Controller.dispose();
+    generalFocus.dispose();
+    specificFocus.dispose();
+    generalController.dispose();
+    specificController.dispose();
     itemNameController.dispose();
     notesController.dispose();
     qtyController.dispose();
@@ -126,63 +131,92 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     super.dispose();
   }
 
-  Future<void> openTier1Picker() async {
+  Future<void> openGeneralPicker() async {
     final r = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (c) => _TierPickerSheet(
-        title: 'General - Place',
-        existing: storageTier1List,
-        hint: 'Search or type new Place',
+      builder: (c) => _GeneralSpecificPickerSheet(
+        title: 'General',
+        existing: storageGeneralList,
+        hint: 'Search or type new General',
         allowBlank: false,
-        onAddNew: (name) => addTier1(name),
-        isDuplicate: isDuplicateTier1,
+        onAddNew: (name) => addGeneral(name),
+        isDuplicate: isDuplicateGeneral,
       ),
     );
-    if (r != null) setState(() => tier1Controller.text = r);
+    if (r != null) setState(() => generalController.text = r);
   }
 
-  Future<void> openTier2Picker() async {
-    if (tier1Controller.text.trim().isEmpty) return;
-    final parent = tier1Controller.text.trim();
+  Future<void> openSpecificPicker() async {
+    if (generalController.text.trim().isEmpty) return;
+    final parent = generalController.text.trim();
     final r = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (c) => _TierPickerSheet(
-        title: 'Specific - Bin for $parent',
-        existing: getTier2ForCurrentTier1(),
-        hint: 'Search or type new Bin',
+      builder: (c) => _GeneralSpecificPickerSheet(
+        title: 'Specific for $parent',
+        existing: getSpecificsForCurrentGeneral(),
+        hint: 'Search or type new Specific',
         allowBlank: true,
-        onAddNew: (name) => addTier2(parent, name),
-        isDuplicate: (name) => isDuplicateTier2(parent, name),
+        onAddNew: (name) => addSpecific(parent, name),
+        isDuplicate: (name) => isDuplicateSpecific(parent, name),
       ),
     );
-    if (r != null) setState(() => tier2Controller.text = r);
+    if (r != null) setState(() => specificController.text = r);
   }
+
+  // keep old method names as aliases so no other file breaks
+  Future<void> openTier1Picker() => openGeneralPicker();
+  Future<void> openTier2Picker() => openSpecificPicker();
 
   Future<void> handleAdd() async {
     if (itemNameController.text.trim().isEmpty) {
       showCenterNotice('Enter Stored Item');
       return;
     }
-    if (tier1Controller.text.trim().isEmpty) {
-      showCenterNotice('Pick General location');
+    if (generalController.text.trim().isEmpty) {
+      showCenterNotice('Pick General');
       return;
     }
-    final loc = concatenatedLocation.isEmpty ? tier1Controller.text.trim() : concatenatedLocation;
+    final loc = fullLocationDisplay.isEmpty ? generalController.text.trim() : fullLocationDisplay;
     final hasPhoto = photoFile != null ? ' 📷' : '';
     final addedName = itemNameController.text.trim();
     final qty = int.tryParse(qtyController.text.trim()) ?? 1;
     final valueText = valueController.text.trim();
     final valueAmt = double.tryParse(valueText.replaceAll('\$', '').trim());
+
+    // v5 ID resolution - JSON keys stay stable
+    final gName = generalController.text.trim();
+    final sName = specificController.text.trim();
+    String specificId = '';
+    String generalId = '';
+    try {
+      final gen = _locationRepo.storageGenerals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
+      generalId = gen['id']?.toString() ?? '';
+      if (sName.isNotEmpty) {
+        final spec = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
+        specificId = spec['id']?.toString() ?? '';
+      } else {
+        final sentinel = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').isEmpty, orElse: () => {});
+        specificId = sentinel['id']?.toString() ?? '';
+      }
+    } catch (_) {}
+
+    final nowIso = DateTime.now().toIso8601String();
     final item = {
       'name': addedName,
-      'tier1': tier1Controller.text.trim(),
-      'tier2': tier2Controller.text.trim(),
-      'place': tier1Controller.text.trim(),
-      'bin': tier2Controller.text.trim(),
+      // v5 stable JSON
+      'generalId': generalId,
+      'specificId': specificId,
+      // denormalized + legacy for backward compat - never change JSON structure again
+      'general': gName,
+      'specific': sName,
+      'tier1': gName,
+      'tier2': sName,
+      'place': gName,
+      'bin': sName,
       'location': loc,
       'qty': qty,
       'quantity': qty,
@@ -190,7 +224,10 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
       'valueAmount': valueText,
       'notes': notesController.text.trim(),
       'photo': photoFile?.path,
-      'createdAt': DateTime.now().toIso8601String(),
+      'photoPath': photoFile?.path,
+      'createdAt': nowIso,
+      'modifyDate': nowIso, // NEW
+      'updatedAt': nowIso,
     };
     await _locationRepo.addStorageItem(item);
     setState(() {
@@ -253,10 +290,10 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     final filter = controller.text.toLowerCase().trim();
     final filtered = filter.isEmpty ? existing : existing.where((e) => e.toLowerCase().contains(filter)).toList();
     final showDropdown = focusNode.hasFocus && filtered.isNotEmpty;
-    final bool canAdd = controller.text.trim().isNotEmpty && (isTier1 ? !isDuplicateTier1(controller.text.trim()) : !isDuplicateTier2(tier1Controller.text.trim(), controller.text.trim()));
+    final bool canAdd = controller.text.trim().isNotEmpty && (isTier1 ? !isDuplicateGeneral(controller.text.trim()) : !isDuplicateSpecific(generalController.text.trim(), controller.text.trim()));
     String? similar;
     if (!isTier1 && controller.text.trim().isNotEmpty) {
-      similar = findSimilarTier2(tier1Controller.text.trim(), controller.text.trim());
+      similar = findSimilarSpecific(generalController.text.trim(), controller.text.trim());
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +434,6 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     );
   }
 
-
   Widget buildPhotoBoxSquare() {
     final bool hasPhoto = photoFile != null;
     return InkWell(
@@ -504,33 +540,33 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(8)),
-              child: Text('Location: ${concatenatedLocation.isEmpty ? '—' : concatenatedLocation}', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+              child: Text('Location: ${fullLocationDisplay.isEmpty ? '—' : fullLocationDisplay}', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
             ),
             const SizedBox(height: 10),
-            const Text('GENERAL AREA (required)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+            const Text('GENERAL (required)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
             const SizedBox(height: 4),
             buildLocationField(
-              controller: tier1Controller,
-              focusNode: tier1Focus,
+              controller: generalController,
+              focusNode: generalFocus,
               hint: 'e.g. Garage, Attic',
               isTier1: true,
               enabled: true,
-              onPickerTap: openTier1Picker,
-              onAddTap: () => addTier1(tier1Controller.text.trim()),
-              existing: storageTier1List,
+              onPickerTap: openGeneralPicker,
+              onAddTap: () => addGeneral(generalController.text.trim()),
+              existing: storageGeneralList,
             ),
             const SizedBox(height: 12),
-            const Text('SPECIFIC AREA (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+            const Text('SPECIFIC (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
             const SizedBox(height: 4),
             buildLocationField(
-              controller: tier2Controller,
-              focusNode: tier2Focus,
+              controller: specificController,
+              focusNode: specificFocus,
               hint: 'e.g. Bin 1, Shelf A (optional)',
               isTier1: false,
-              enabled: tier1Controller.text.trim().isNotEmpty,
-              onPickerTap: openTier2Picker,
-              onAddTap: () => addTier2(tier1Controller.text.trim(), tier2Controller.text.trim()),
-              existing: getTier2ForCurrentTier1(),
+              enabled: generalController.text.trim().isNotEmpty,
+              onPickerTap: openSpecificPicker,
+              onAddTap: () => addSpecific(generalController.text.trim(), specificController.text.trim()),
+              existing: getSpecificsForCurrentGeneral(),
             ),
             const SizedBox(height: 18),
             const Text('ITEM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
@@ -548,7 +584,6 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            // Square thumbnail half-width beside vertically stacked Quantity/Value - consistent border matching other fields
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -617,7 +652,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Expanded(child: Text('Location does not reset so you can add multiple items, but you can change it when needed.', style: TextStyle(fontSize: 11, color: Colors.black87, fontWeight: FontWeight.w600, height: 1.3))),
+                const Expanded(child: Text('General / Specific does not reset so you can add multiple items, but you can change it when needed.', style: TextStyle(fontSize: 11, color: Colors.black87, fontWeight: FontWeight.w600, height: 1.3))),
                 const SizedBox(width: 12),
                 SizedBox(
                   height: 36,
@@ -642,19 +677,19 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
   }
 }
 
-class _TierPickerSheet extends StatefulWidget {
+class _GeneralSpecificPickerSheet extends StatefulWidget {
   final String title;
   final List<String> existing;
   final String hint;
   final bool allowBlank;
   final void Function(String) onAddNew;
   final bool Function(String) isDuplicate;
-  const _TierPickerSheet({required this.title, required this.existing, required this.hint, required this.allowBlank, required this.onAddNew, required this.isDuplicate});
+  const _GeneralSpecificPickerSheet({required this.title, required this.existing, required this.hint, required this.allowBlank, required this.onAddNew, required this.isDuplicate});
   @override
-  State<_TierPickerSheet> createState() => _TierPickerSheetState();
+  State<_GeneralSpecificPickerSheet> createState() => _GeneralSpecificPickerSheetState();
 }
 
-class _TierPickerSheetState extends State<_TierPickerSheet> {
+class _GeneralSpecificPickerSheetState extends State<_GeneralSpecificPickerSheet> {
   late TextEditingController searchController;
   String filter = '';
   @override

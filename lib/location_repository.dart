@@ -340,4 +340,20 @@ class LocationRepository {
       await save();
     }
   }
+  Future<void> addPoiItem(Map<String, dynamic> item) async {
+    _poiItems.add(item);
+    await save();
+  }
+  Future<void> updatePoiItem(int index, Map<String, dynamic> item) async {
+    if (index >=0 && index < _poiItems.length) {
+      _poiItems[index] = item;
+      await save();
+    }
+  }
+  Future<void> deletePoiItem(int index) async {
+    if (index >=0 && index < _poiItems.length) {
+      _poiItems.removeAt(index);
+      await save();
+    }
+  }
 }

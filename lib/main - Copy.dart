@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'screens/storage_add_screen.dart';
 import 'screens/storage_edit_screen.dart';
 import 'screens/inventory_add_screen.dart';
@@ -13,7 +12,6 @@ import 'data/migrate_json.dart';
 
 
 Future<void> migrateWherelogData() async {
-  if (kIsWeb) return; // WEB = read-only, no file IO
   final docDir = Directory('${Platform.environment['USERPROFILE']}\\Documents');
   final file = File('${docDir.path}\\wherelog_data.json');
   if (!file.existsSync()) return;

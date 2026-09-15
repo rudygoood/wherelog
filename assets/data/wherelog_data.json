@@ -27,6 +27,10 @@
     {
       "id": "stogen_007",
       "name": "Out Building #1"
+    },
+    {
+      "id": "stogen_008",
+      "name": "Out Building #2"
     }
   ],
   "storageSpecifics": [
@@ -134,6 +138,21 @@
       "id": "stospec_021",
       "generalId": "stogen_007",
       "name": "Old File Cabinet"
+    },
+    {
+      "id": "stospec_022",
+      "generalId": "stogen_008",
+      "name": ""
+    },
+    {
+      "id": "stospec_023",
+      "generalId": "stogen_008",
+      "name": "Drawer 12"
+    },
+    {
+      "id": "stospec_024",
+      "generalId": "stogen_008",
+      "name": "Drawer 11"
     }
   ],
   "storageItems": [
@@ -143,17 +162,7 @@
       "specificId": "stospec_012",
       "notes": "A note.",
       "image": null,
-      "createdAt": "2026-09-06T20:03:38.125541",
-      "modifyDate": "2026-09-06T20:03:38.125541",
-      "updatedAt": "2026-09-06T20:03:38.125541",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null,
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": ""
+      "createdAt": "2026-09-06T20:03:38.125541"
     },
     {
       "id": "stoitem_002",
@@ -161,17 +170,7 @@
       "specificId": "stospec_003",
       "notes": "",
       "image": null,
-      "createdAt": "2026-09-07T07:36:05.010989",
-      "modifyDate": "2026-09-07T07:36:05.010989",
-      "updatedAt": "2026-09-07T07:36:05.010989",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null,
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": ""
+      "createdAt": "2026-09-07T07:36:05.010989"
     },
     {
       "id": "stoitem_003",
@@ -179,17 +178,7 @@
       "specificId": "stospec_012",
       "notes": "Yellow tractor paint to use with on our yellow tractor.",
       "image": null,
-      "createdAt": "2026-09-07T13:01:31.743718",
-      "modifyDate": "2026-09-07T13:01:31.743718",
-      "updatedAt": "2026-09-07T13:01:31.743718",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null,
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": ""
+      "createdAt": "2026-09-07T13:01:31.743718"
     },
     {
       "id": "stoitem_004",
@@ -197,17 +186,7 @@
       "specificId": "stospec_006",
       "notes": "A small note.",
       "image": null,
-      "createdAt": "2026-09-07T18:40:56.493943",
-      "modifyDate": "2026-09-07T18:40:56.493943",
-      "updatedAt": "2026-09-07T18:40:56.493943",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null,
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": ""
+      "createdAt": "2026-09-07T18:40:56.493943"
     },
     {
       "id": "stoitem_005",
@@ -215,17 +194,7 @@
       "specificId": "stospec_019",
       "notes": "This is an additional detail.",
       "image": null,
-      "createdAt": "2026-09-07T20:54:55.672319",
-      "modifyDate": "2026-09-07T20:54:55.672319",
-      "updatedAt": "2026-09-07T20:54:55.672319",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null,
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": ""
+      "createdAt": "2026-09-07T20:54:55.672319"
     },
     {
       "id": "stoitem_006",
@@ -233,17 +202,7 @@
       "specificId": "stospec_021",
       "notes": "",
       "image": null,
-      "createdAt": "2026-09-07T21:11:48.278816",
-      "modifyDate": "2026-09-07T21:11:48.278816",
-      "updatedAt": "2026-09-07T21:11:48.278816",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null,
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": ""
+      "createdAt": "2026-09-07T21:11:48.278816"
     },
     {
       "id": "stoitem_007",
@@ -251,17 +210,53 @@
       "specificId": "stospec_005",
       "notes": "",
       "image": null,
-      "createdAt": "2026-09-08T00:21:00.354917",
-      "modifyDate": "2026-09-08T00:21:00.354917",
-      "updatedAt": "2026-09-08T00:21:00.354917",
+      "createdAt": "2026-09-08T00:21:00.354917"
+    },
+    {
+      "id": "stoitem_008",
+      "name": "Copper Plumbing Fittings",
+      "generalId": "stogen_008",
+      "specificId": "stospec_024",
+      "general": "Out Building #2",
+      "specific": "Drawer 11",
+      "tier1": "Out Building #2",
+      "tier2": "Drawer 11",
+      "place": "Out Building #2",
+      "bin": "Drawer 11",
+      "location": "Out Building #2 / Drawer 11",
+      "qty": 1,
+      "quantity": 1,
       "value": null,
       "valueAmount": "",
+      "notes": "",
       "photo": null,
       "photoPath": null,
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": ""
+      "createdAt": "2026-09-14T16:53:17.485530",
+      "modifyDate": "2026-09-14T16:55:50.595823",
+      "updatedAt": "2026-09-14T16:55:50.595823"
+    },
+    {
+      "name": "Used car parts",
+      "generalId": "stogen_003",
+      "specificId": "stospec_012",
+      "general": "Basement",
+      "specific": "Middle Shelf",
+      "tier1": "Basement",
+      "tier2": "Middle Shelf",
+      "place": "Basement",
+      "bin": "Middle Shelf",
+      "location": "Basement / Middle Shelf",
+      "qty": 1,
+      "quantity": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-14T18:26:02.397585",
+      "modifyDate": "2026-09-14T18:26:02.399718",
+      "updatedAt": "2026-09-14T18:26:02.399718",
+      "id": "stoitem_009"
     }
   ],
   "inventoryGenerals": [
@@ -399,6 +394,11 @@
       "id": "invspec_021",
       "generalId": "invgen_007",
       "name": "Old File Cabinet"
+    },
+    {
+      "id": "invspec_022",
+      "generalId": "invgen_005",
+      "name": "Bin 2"
     }
   ],
   "inventoryItems": [
@@ -408,17 +408,7 @@
       "specificId": "invspec_012",
       "notes": "A note.",
       "image": null,
-      "createdAt": "2026-09-06T20:03:38.125541",
-      "modifyDate": "2026-09-06T20:03:38.125541",
-      "updatedAt": "2026-09-06T20:03:38.125541",
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": "",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null
+      "createdAt": "2026-09-06T20:03:38.125541"
     },
     {
       "id": "invitem_002",
@@ -426,17 +416,7 @@
       "specificId": "invspec_003",
       "notes": "",
       "image": null,
-      "createdAt": "2026-09-07T07:36:05.010989",
-      "modifyDate": "2026-09-07T07:36:05.010989",
-      "updatedAt": "2026-09-07T07:36:05.010989",
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": "",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null
+      "createdAt": "2026-09-07T07:36:05.010989"
     },
     {
       "id": "invitem_003",
@@ -444,17 +424,7 @@
       "specificId": "invspec_012",
       "notes": "Yellow tractor paint to use with on our yellow tractor.",
       "image": null,
-      "createdAt": "2026-09-07T13:01:31.743718",
-      "modifyDate": "2026-09-07T13:01:31.743718",
-      "updatedAt": "2026-09-07T13:01:31.743718",
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": "",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null
+      "createdAt": "2026-09-07T13:01:31.743718"
     },
     {
       "id": "invitem_004",
@@ -462,17 +432,7 @@
       "specificId": "invspec_006",
       "notes": "A small note.",
       "image": null,
-      "createdAt": "2026-09-07T18:40:56.493943",
-      "modifyDate": "2026-09-07T18:40:56.493943",
-      "updatedAt": "2026-09-07T18:40:56.493943",
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": "",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null
+      "createdAt": "2026-09-07T18:40:56.493943"
     },
     {
       "id": "invitem_005",
@@ -480,17 +440,7 @@
       "specificId": "invspec_019",
       "notes": "This is an additional detail.",
       "image": null,
-      "createdAt": "2026-09-07T20:54:55.672319",
-      "modifyDate": "2026-09-07T20:54:55.672319",
-      "updatedAt": "2026-09-07T20:54:55.672319",
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": "",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null
+      "createdAt": "2026-09-07T20:54:55.672319"
     },
     {
       "id": "invitem_006",
@@ -498,17 +448,7 @@
       "specificId": "invspec_021",
       "notes": "",
       "image": null,
-      "createdAt": "2026-09-07T21:11:48.278816",
-      "modifyDate": "2026-09-07T21:11:48.278816",
-      "updatedAt": "2026-09-07T21:11:48.278816",
-      "serialNumber": "",
-      "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": "",
-      "value": null,
-      "valueAmount": "",
-      "photo": null,
-      "photoPath": null
+      "createdAt": "2026-09-07T21:11:48.278816"
     },
     {
       "id": "invitem_007",
@@ -516,20 +456,73 @@
       "specificId": "invspec_005",
       "notes": "",
       "image": null,
-      "createdAt": "2026-09-08T00:21:00.354917",
-      "modifyDate": "2026-09-08T00:21:00.354917",
-      "updatedAt": "2026-09-08T00:21:00.354917",
-      "serialNumber": "",
+      "createdAt": "2026-09-08T00:21:00.354917"
+    },
+    {
+      "id": "invitem_008",
+      "name": "An inventory item.",
+      "generalId": "invgen_005",
+      "specificId": "invspec_022",
+      "general": "Shed",
+      "specific": "Bin 2",
+      "tier1": "Shed",
+      "tier2": "Bin 2",
+      "place": "Shed",
+      "bin": "Bin 2",
+      "location": "Shed / Bin 2",
+      "serial_number": "123456",
+      "serial": "123456",
+      "acquisition_date": "2026-09-02T00:00:00.000",
+      "acquiredDate": "2026-09-02T00:00:00.000",
+      "value": 500.0,
+      "valueAmount": "500.00",
+      "notes": "Notes and notes and still more notes",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-14T22:18:02.986702",
+      "modifyDate": "2026-09-14T22:21:46.201818",
+      "updatedAt": "2026-09-14T22:21:46.201818"
+    },
+    {
+      "name": "Refrigerator",
+      "generalId": "invgen_002",
+      "specificId": "invspec_007",
+      "general": "Kitchen",
+      "specific": "",
+      "tier1": "Kitchen",
+      "tier2": "",
+      "place": "Kitchen",
+      "bin": "",
+      "location": "Kitchen",
+      "serial_number": "",
       "serial": "",
-      "dateAcquired": "",
-      "acquiredDate": "",
+      "acquisition_date": null,
+      "acquiredDate": null,
       "value": null,
       "valueAmount": "",
+      "notes": "",
       "photo": null,
-      "photoPath": null
+      "photoPath": null,
+      "createdAt": "2026-09-15T11:48:50.000565",
+      "modifyDate": "2026-09-15T11:48:50.000565",
+      "updatedAt": "2026-09-15T11:48:50.000565"
     }
   ],
-  "poiItems": [],
+  "poiItems": [
+    {
+      "id": "poi_1789446455509",
+      "name": "My home",
+      "lat": 38.5355,
+      "lng": 78.0868,
+      "address": "483 Church Ave., Stanley, VA 22851",
+      "notes": "Notes here are notes",
+      "photo": "C:\\Users\\rudy\\OneDrive\\Photos\\Leif with Brian.JPG",
+      "photoPath": "C:\\Users\\rudy\\OneDrive\\Photos\\Leif with Brian.JPG",
+      "createdAt": "2026-09-15T00:27:35.509219",
+      "modifyDate": "2026-09-15T00:27:35.509219",
+      "updatedAt": "2026-09-15T00:27:35.509219"
+    }
+  ],
   "version": 5,
-  "migratedAt": "2026-09-14T13:25:51.498478"
+  "savedAt": "2026-09-15T11:48:50.008241"
 }

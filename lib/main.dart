@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'screens/storage_add_screen.dart';
+import 'screens/app_menu_shell.dart';
+import 'screens/location_options_maintenance_screen.dart';
 import 'screens/storage_edit_screen.dart';
 import 'screens/inventory_add_screen.dart';
 import 'screens/inventory_edit_screen.dart';
@@ -488,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen>
         actions: [
           IconButton(
               icon: Icon(Icons.menu, color: Colors.black),
-              onPressed: () => _openLocationsSheet())
+              onPressed: () => _openAppMenu())
         ],
       ),
       body: Column(children: [
@@ -1278,32 +1280,16 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _openLocationsSheet() {
-    showGeneralDialog(
+  void _openAppMenu() {
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: 'locations',
-      barrierColor: Colors.black54,
-      transitionDuration: Duration(milliseconds: 250),
-      pageBuilder: (c, a1, a2) {
-        return Align(
-          alignment: Alignment.topCenter,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              margin: EdgeInsets.only(top: 40, left: 8, right: 8),
-              height: MediaQuery.of(context).size.height * 0.85,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-              child: LocationsSheet(places: places),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (c, anim, secAnim, child) {
-        return SlideTransition(position: Tween(begin: Offset(0, -1), end: Offset(0, 0)).animate(anim), child: child);
-      },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AppMenuShell(),
     );
   }
+
+  
 }
 
 class Place {

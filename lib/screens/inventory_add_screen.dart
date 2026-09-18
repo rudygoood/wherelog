@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../location_repository.dart';
 import '../widgets/notes_section.dart';
+import '../widgets/required_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -550,55 +551,18 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(8)),
-              child: Text('Location: ${fullLocationDisplay.isEmpty ? '—' : fullLocationDisplay}', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
-            ),
-            const SizedBox(height: 10),
-            const Text('GENERAL (required)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-            const SizedBox(height: 4),
-            buildLocationField(
-              controller: generalController,
-              focusNode: generalFocus,
-              hint: 'e.g. Garage, Attic',
-              isTier1: true,
-              enabled: true,
-              onPickerTap: openGeneralPicker,
-              onAddTap: () => addGeneral(generalController.text.trim()),
-              existing: inventoryGeneralList,
-            ),
-            const SizedBox(height: 12),
-            const Text('SPECIFIC (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-            const SizedBox(height: 4),
-            buildLocationField(
-              controller: specificController,
-              focusNode: specificFocus,
-              hint: 'e.g. Bin 1, Shelf A (optional)',
-              isTier1: false,
-              enabled: generalController.text.trim().isNotEmpty,
-              onPickerTap: openSpecificPicker,
-              onAddTap: () => addSpecific(generalController.text.trim(), specificController.text.trim()),
-              existing: getSpecificsForCurrentGeneral(),
-            ),
-            const SizedBox(height: 18),
-            const Text('ITEM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
-            const SizedBox(height: 4),
-            TextField(
-              controller: itemNameController,
-              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                hintText: 'Inventory Item',
-                hintStyle: const TextStyle(color: Colors.black38),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              ),
+            RequiredSection(
+              source: RequiredSectionSource.inventory,
+              generalController: generalController,
+              specificController: specificController,
+              itemNameController: itemNameController,
+              generalFocus: generalFocus,
+              specificFocus: specificFocus,
+              locationRepo: _locationRepo,
+              itemHint: 'Inventory Item',
             ),
             const SizedBox(height: 14),
-            Row(
+                        Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../location_repository.dart';
+import '../widgets/notes_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -25,6 +26,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
   Map<String, dynamic>? _originalItem;
   final _picker = ImagePicker();
   final _locationRepo = LocationRepository();
+  bool _notesExpanded = false; // start state from app setting
   bool _isLoading = true;
 
   List<String> get inventoryGeneralList => _locationRepo.inventoryTier1List;
@@ -731,9 +733,11 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
               ])),
             ]),
             const SizedBox(height: 14),
-            const Text('NOTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
-            const SizedBox(height: 4),
-            TextField(controller: notesController, minLines: 3, maxLines: 3, style: const TextStyle(color: Colors.black87), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white)),
+            NotesSection(
+              controller: notesController,
+              isExpanded: _notesExpanded,
+              onToggle: () => setState(() => _notesExpanded = !_notesExpanded),
+            ),
             const SizedBox(height: 20),
             Row(children: [
               Expanded(child: SizedBox(height: 44, child: OutlinedButton(onPressed: () async { final ok = await _confirmDiscard(); if (ok && mounted) Navigator.pop(context); }, child: const Text('Cancel')))),

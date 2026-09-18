@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../location_repository.dart';
+import '../widgets/notes_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -20,6 +21,7 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
   File? photoFile;
   final _picker = ImagePicker();
   final _repo = LocationRepository();
+  bool _notesExpanded = false; // start state from app setting
   bool _isGettingLocation = false;
 
   @override
@@ -245,9 +247,11 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [const Text('NOTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)), const Spacer(), InkWell(onTap: openNotesEditor, child: const Row(children: [Icon(Icons.open_in_full, size: 12, color: Colors.black54), SizedBox(width: 2), Text('Expand', style: TextStyle(fontSize: 10, color: Colors.black54))]))]),
-                      const SizedBox(height: 4),
-                      TextField(controller: notesController, minLines: 4, maxLines: 4, decoration: InputDecoration(hintText: 'Details...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white)),
+                      NotesSection(
+                        controller: notesController,
+                        isExpanded: _notesExpanded,
+                        onToggle: () => setState(() => _notesExpanded = !_notesExpanded),
+                      ),
                     ],
                   ),
                 ),

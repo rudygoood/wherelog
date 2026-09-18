@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../location_repository.dart';
+import '../widgets/notes_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -24,6 +25,7 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
   File? photoFile;
   final _picker = ImagePicker();
   final _locationRepo = LocationRepository();
+  bool _notesExpanded = false; // start state from app setting
 
   // Backward compat getters map to v5 repo methods
   List<String> get inventoryGeneralList => _locationRepo.inventoryTier1List;
@@ -661,22 +663,11 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                const Text('NOTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87)),
-                Spacer(),
-                InkWell(
-                  onTap: openNotesEditor,
-                  borderRadius: BorderRadius.circular(6),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    child: Row(children: [Icon(Icons.open_in_full, size: 14, color: Colors.black54), SizedBox(width: 4), Text('Expand', style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600))]),
-                  ),
-                ),
-              ],
+            NotesSection(
+              controller: notesController,
+              isExpanded: _notesExpanded,
+              onToggle: () => setState(() => _notesExpanded = !_notesExpanded),
             ),
-            const SizedBox(height: 4),
-            TextField(controller: notesController, minLines: 3, maxLines: 3, style: const TextStyle(color: Colors.black87), decoration: InputDecoration(hintText: 'Additional details (optional)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white)),
             const SizedBox(height: 16),
             Row(
               children: [

@@ -28,25 +28,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
   final _locationRepo = LocationRepository();
 
   // Backward compat getters map to v5 repo methods
-  List<String> get storageGeneralList => _locationRepo.storageTier1List;
-  List<String> getSpecificsForCurrentGeneral() {
-    final p = generalController.text.trim();
-    if (p.isEmpty) return [];
-    return _locationRepo.storageTier2For(p);
-  }
-  bool isDuplicateGeneral(String name) => _locationRepo.isDuplicateStorageTier1(name);
-  bool isDuplicateSpecific(String parent, String name) => _locationRepo.isDuplicateStorageTier2(parent, name);
 
-  String? findSimilarSpecific(String parent, String newName) {
-    final list = _locationRepo.storageData[parent] ?? [];
-    final nl = newName.toLowerCase();
-    for (final ex in list) {
-      if (ex.toLowerCase().contains(nl) || nl.contains(ex.toLowerCase())) {
-        if (ex.toLowerCase() != nl) return ex;
-      }
-    }
-    return null;
-  }
 
   void showCenterNotice(String msg) {
     showDialog(
@@ -84,22 +66,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     }
   }
 
-  Future<void> addGeneral(String name) async {
-    final t = name.trim();
-    if (t.isEmpty || isDuplicateGeneral(t)) return;
-    await _locationRepo.addStorageTier1(t);
-    setState(() {});
-    showCenterNotice('Added General: $t');
-  }
 
-  Future<void> addSpecific(String parent, String name) async {
-    final p = parent.trim();
-    final t = name.trim();
-    if (p.isEmpty || t.isEmpty || isDuplicateSpecific(p, t)) return;
-    await _locationRepo.addStorageTier2(p, t);
-    setState(() {});
-    showCenterNotice('Added Specific: $t for $p');
-  }
 
   String get fullLocationDisplay {
     final g = generalController.text.trim();
@@ -134,46 +101,9 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     super.dispose();
   }
 
-  Future<void> openGeneralPicker() async {
-    final r = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (c) => _GeneralSpecificPickerSheet(
-        title: 'General',
-        existing: storageGeneralList,
-        hint: 'Search or type new General',
-        allowBlank: false,
-        onAddNew: (name) => addGeneral(name),
-        isDuplicate: isDuplicateGeneral,
-      ),
-    );
-    if (r != null) setState(() => generalController.text = r);
-  }
 
-  Future<void> openSpecificPicker() async {
-    if (generalController.text.trim().isEmpty) return;
-    final parent = generalController.text.trim();
-    final r = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (c) => _GeneralSpecificPickerSheet(
-        title: 'Specific for $parent',
-        existing: getSpecificsForCurrentGeneral(),
-        hint: 'Search or type new Specific',
-        allowBlank: true,
-        onAddNew: (name) => addSpecific(parent, name),
-        isDuplicate: (name) => isDuplicateSpecific(parent, name),
-      ),
-    );
-    if (r != null) setState(() => specificController.text = r);
-  }
 
   // keep old method names as aliases so no other file breaks
-  Future<void> openTier1Picker() => openGeneralPicker();
-  Future<void> openTier2Picker() => openSpecificPicker();
-
   Future<void> handleAdd() async {
     if (itemNameController.text.trim().isEmpty) {
       showCenterNotice('Enter Stored Item');
@@ -280,112 +210,6 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     if (img != null) setState(() => photoFile = File(img.path));
   }
 
-  Widget buildLocationField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String hint,
-    required bool isTier1,
-    required bool enabled,
-    required VoidCallback onPickerTap,
-    required VoidCallback onAddTap,
-    required List<String> existing,
-  }) {
-    final filter = controller.text.toLowerCase().trim();
-    final filtered = filter.isEmpty ? existing : existing.where((e) => e.toLowerCase().contains(filter)).toList();
-    final showDropdown = focusNode.hasFocus && filtered.isNotEmpty;
-    final bool canAdd = controller.text.trim().isNotEmpty && (isTier1 ? !isDuplicateGeneral(controller.text.trim()) : !isDuplicateSpecific(generalController.text.trim(), controller.text.trim()));
-    String? similar;
-    if (!isTier1 && controller.text.trim().isNotEmpty) {
-      similar = findSimilarSpecific(generalController.text.trim(), controller.text.trim());
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                enabled: enabled,
-                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: hint,
-                  hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  filled: true,
-                  fillColor: enabled ? Colors.white : Colors.black12,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  isDense: true,
-                ),
-                onChanged: (_) => setState(() {}),
-                onTap: () => setState(() {}),
-              ),
-            ),
-            const SizedBox(width: 6),
-            SizedBox(
-              width: 36,
-              height: 36,
-              child: OutlinedButton(
-                onPressed: enabled ? onPickerTap : null,
-                style: OutlinedButton.styleFrom(padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                child: Icon(Icons.expand_more, size: 20),
-              ),
-            ),
-            const SizedBox(width: 6),
-            SizedBox(
-              height: 36,
-              child: ElevatedButton(
-                onPressed: canAdd ? onAddTap : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: canAdd ? Colors.black87 : Colors.black12,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: Text('+ Add', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-        if (showDropdown)
-          Container(
-            margin: EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]),
-            constraints: BoxConstraints(maxHeight: 180),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: filtered.length > 6 ? 6 : filtered.length,
-              itemBuilder: (c, i) {
-                final e = filtered[i];
-                final bool isExact = e.toLowerCase() == filter;
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (_) {
-                    controller.text = e;
-                    controller.selection = TextSelection.fromPosition(TextPosition(offset: e.length));
-                    setState(() {});
-                    Future.delayed(const Duration(milliseconds: 100), () {
-                      if (focusNode.hasFocus) focusNode.unfocus();
-                    });
-                  },
-                  child: ListTile(
-                    dense: true,
-                    title: Text(e, style: TextStyle(fontWeight: isExact ? FontWeight.bold : FontWeight.w600, fontSize: 13)),
-                    trailing: isExact ? Icon(Icons.check, size: 16, color: Colors.black87) : null,
-                  ),
-                );
-              },
-            ),
-          ),
-                if (similar != null)
-          Padding(
-            padding: EdgeInsets.only(top: 4, left: 4),
-            child: Text('Similar to "$similar" exists — select it from the list above', style: TextStyle(fontSize: 11, color: Colors.orange.shade800, fontWeight: FontWeight.w600)),
-          ),
-      ],
-    );
-  }
 
   Future<void> openFullPhotoViewer(File file) async {
     await showDialog(
@@ -627,69 +451,6 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _GeneralSpecificPickerSheet extends StatefulWidget {
-  final String title;
-  final List<String> existing;
-  final String hint;
-  final bool allowBlank;
-  final void Function(String) onAddNew;
-  final bool Function(String) isDuplicate;
-  const _GeneralSpecificPickerSheet({required this.title, required this.existing, required this.hint, required this.allowBlank, required this.onAddNew, required this.isDuplicate});
-  @override
-  State<_GeneralSpecificPickerSheet> createState() => _GeneralSpecificPickerSheetState();
-}
-
-class _GeneralSpecificPickerSheetState extends State<_GeneralSpecificPickerSheet> {
-  late TextEditingController searchController;
-  String filter = '';
-  @override
-  void initState() {
-    super.initState();
-    searchController = TextEditingController();
-    searchController.addListener(() => setState(() => filter = searchController.text));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filtered = widget.existing.where((e) => filter.isEmpty || e.toLowerCase().contains(filter.toLowerCase())).toList();
-    final bool canAdd = filter.trim().isNotEmpty && !widget.isDuplicate(filter.trim());
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (c, scroll) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(children: [
-          Row(children: [Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), const Spacer(), IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))]),
-          TextField(controller: searchController, decoration: InputDecoration(hintText: widget.hint, prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
-          const SizedBox(height: 8),
-          if (canAdd)
-            ListTile(
-              leading: const Icon(Icons.add, color: Colors.black87),
-              title: Text('Add "$filter" as new', style: const TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                widget.onAddNew(filter.trim());
-                Navigator.pop(context, filter.trim());
-              },
-            ),
-          if (widget.allowBlank) ListTile(title: const Text('(None)'), onTap: () => Navigator.pop(context, '')),
-          Expanded(
-            child: ListView.builder(
-              controller: scroll,
-              itemCount: filtered.length,
-              itemBuilder: (c, i) {
-                final e = filtered[i];
-                return ListTile(title: Text(e), onTap: () => Navigator.pop(context, e));
-              },
-            ),
-          ),
-        ]),
       ),
     );
   }

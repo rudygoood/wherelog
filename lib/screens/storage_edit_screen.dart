@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../location_repository.dart';
 import '../widgets/notes_section.dart';
+import '../widgets/photo_details_section.dart';
 import '../widgets/required_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -27,7 +28,8 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
   final _picker = ImagePicker();
   final _locationRepo = LocationRepository();
   bool _isLoading = true;
-  bool _notesExpanded = false; // start state from app setting
+  bool _notesExpanded = false;
+  bool _photoDetailsExpanded = true;
 
 
   void showCenterNotice(String msg) {
@@ -521,21 +523,21 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
               itemHint: 'Stored Item',
             ),
             const SizedBox(height: 14),
-                        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(flex: 3, child: AspectRatio(aspectRatio: 1, child: buildPhotoBoxSquare())),
-              const SizedBox(width: 12),
-              Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                const SizedBox(height: 4),
-                TextField(controller: qtyController, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white, contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), isDense: true)),
-                const SizedBox(height: 12),
-                const Text('VALUE (\$)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                const SizedBox(height: 4),
-                TextField(controller: valueController, keyboardType: const TextInputType.numberWithOptions(decimal: true), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600), decoration: InputDecoration(prefixIcon: const Icon(Icons.attach_money, size: 18), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white, contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), isDense: true)),
-              ])),
-            ]),
-            const SizedBox(height: 14),
+                        PhotoDetailsSection(
+              storageKey: 'photoDetailsExpanded_storage_edit',
+              isExpanded: _photoDetailsExpanded,
+              onToggle: () => setState(() => _photoDetailsExpanded = !_photoDetailsExpanded),
+              variant: PhotoDetailsVariant.storage,
+              photoFile: photoFile,
+              onPhotoAdd: openPhotoSheet,
+              onPhotoView: () => openFullPhotoViewer(photoFile!),
+              onPhotoEdit: openPhotoSheet,
+              valueController: valueController,
+              qtyController: qtyController,
+            ),
+            const SizedBox(height: 14),const SizedBox(height: 14),
             NotesSection(
+              storageKey: 'notesExpanded_storage_edit',
               controller: notesController,
               isExpanded: _notesExpanded,
               onToggle: () => setState(() => _notesExpanded = !_notesExpanded),

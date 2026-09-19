@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../location_repository.dart';
 import '../widgets/notes_section.dart';
+import '../widgets/photo_details_section.dart';
 import '../widgets/required_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -27,7 +28,8 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
   Map<String, dynamic>? _originalItem;
   final _picker = ImagePicker();
   final _locationRepo = LocationRepository();
-  bool _notesExpanded = false; // start state from app setting
+  bool _notesExpanded = false;
+  bool _photoDetailsExpanded = true; // start state from app setting
   bool _isLoading = true;
 
 
@@ -531,25 +533,32 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
               itemHint: 'Inventory Item',
             ),
             const SizedBox(height: 14),
-                        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(flex: 3, child: AspectRatio(aspectRatio: 1, child: buildPhotoBoxSquare())),
-              const SizedBox(width: 12),
-              Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Serial Number', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                const SizedBox(height: 4),
-                TextField(controller: serialController, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white, contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), isDense: true)),
-                const SizedBox(height: 12),
-                const Text('VALUE (\$)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                const SizedBox(height: 4),
-                TextField(controller: valueController, keyboardType: const TextInputType.numberWithOptions(decimal: true), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600), decoration: InputDecoration(prefixIcon: const Icon(Icons.attach_money, size: 18), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white, contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), isDense: true)),
-                const SizedBox(height: 12),
-                const Text('ACQUISITION DATE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
-                const SizedBox(height: 4),
-                InkWell(onTap: pickAcquiredDate, borderRadius: BorderRadius.circular(10), child: Container(height: 40, padding: const EdgeInsets.symmetric(horizontal: 10), decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black26), borderRadius: BorderRadius.circular(10)), child: Row(children: [Expanded(child: Text(acquiredDate == null ? 'Optional' : '${acquiredDate!.month}/${acquiredDate!.day}/${acquiredDate!.year}', style: TextStyle(color: acquiredDate == null ? Colors.black38 : Colors.black87, fontSize: 13, fontWeight: acquiredDate == null ? FontWeight.normal : FontWeight.w600))), const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.black54)]))),
-              ])),
-            ]),
-            const SizedBox(height: 14),
+                        PhotoDetailsSection(
+              storageKey: 'photoDetailsExpanded_inventory_edit',
+              isExpanded: _photoDetailsExpanded,
+              onToggle: () => setState(() => _photoDetailsExpanded = !_photoDetailsExpanded),
+              variant: PhotoDetailsVariant.inventory,
+              photoFile: photoFile,
+              onPhotoAdd: openPhotoSheet,
+              onPhotoView: () => openFullPhotoViewer(photoFile!),
+              onPhotoEdit: openPhotoSheet,
+              valueController: valueController,
+              serialController: serialController,
+              acquiredDate: acquiredDate,
+              onPickAcquiredDate: () async {
+                final now = DateTime.now();
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: acquiredDate ?? now,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(now.year + 5),
+                );
+                if (picked != null) setState(() => acquiredDate = picked);
+              },
+            ),
+            const SizedBox(height: 14),const SizedBox(height: 14),
             NotesSection(
+              storageKey: 'notesExpanded_inventory_edit',
               controller: notesController,
               isExpanded: _notesExpanded,
               onToggle: () => setState(() => _notesExpanded = !_notesExpanded),

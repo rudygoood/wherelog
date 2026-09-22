@@ -1,7 +1,9 @@
-
 import 'package:flutter/material.dart';
-import '../location_repository.dart';
+import '../widgets/app_header.dart';
+import '../widgets/gps_location_section.dart';
+import '../widgets/photo_details_section.dart';
 import '../widgets/notes_section.dart';
+import '../location_repository.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -18,11 +20,14 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
   final addressController = TextEditingController();
   final latController = TextEditingController();
   final lngController = TextEditingController();
+  final valueController = TextEditingController();
   File? photoFile;
   final _picker = ImagePicker();
   final _repo = LocationRepository();
-  bool _notesExpanded = false; // start state from app setting
+  bool _notesExpanded = true;
+  bool _photoExpanded = true;
   bool _isGettingLocation = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -39,7 +44,10 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
           if ((item['photo'] ?? item['photoPath'] ?? '').toString().isNotEmpty) {
             try { photoFile = File((item['photo'] ?? item['photoPath']).toString()); } catch (_) {}
           }
+          _isLoading = false;
         });
+      } else {
+        setState(() => _isLoading = false);
       }
     });
   }
@@ -51,6 +59,7 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
     addressController.dispose();
     latController.dispose();
     lngController.dispose();
+    valueController.dispose();
     super.dispose();
   }
 
@@ -83,7 +92,6 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
     );
   }
 
-  // Method 2: Current GPS - add geolocator: ^10.1.0 to enable live
   Future<void> captureCurrentGps() async {
     setState(() => _isGettingLocation = true);
     try {
@@ -114,22 +122,6 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
     }
   }
 
-  Future<void> openNotesEditor() async {
-    final temp = TextEditingController(text: notesController.text);
-    final res = await showDialog<String>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Edit Notes'),
-        content: TextField(controller: temp, minLines: 4, maxLines: 8),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(c, temp.text), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (res != null) setState(() => notesController.text = res);
-  }
-
   Future<void> openPhotoSheet() async {
     final src = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -150,15 +142,18 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
     if (img != null) setState(() => photoFile = File(img.path));
   }
 
-  Widget buildPhotoBoxSquare() {
-    return InkWell(
-      onTap: openPhotoSheet,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black26), borderRadius: BorderRadius.circular(10)),
-        child: photoFile != null
-            ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(photoFile!, fit: BoxFit.cover, width: double.infinity, height: double.infinity))
-            : const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.add_a_photo, size: 28, color: Colors.black38), SizedBox(height: 4), Text('Photo', style: TextStyle(fontSize: 11, color: Colors.black38))])),
+  Future<void> openFullPhotoViewer(File file) async {
+    await showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        child: Stack(children: [
+          Center(child: Image.file(file, fit: BoxFit.contain)),
+          Positioned(
+            right: 8,
+            top: 8,
+            child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(c)),
+          ),
+        ]),
       ),
     );
   }
@@ -194,74 +189,63 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF2F0E9),
+        appBar: const AppHeader(screenName: 'Edit Place of Interest'),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF2F0E9),
-      appBar: AppBar(backgroundColor: Colors.black87, foregroundColor: Colors.white, title: const Text('Edit Place of Interest', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+      appBar: const AppHeader(screenName: 'Edit Place of Interest'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('GPS LOCATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(10)),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: TextField(controller: latController, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: InputDecoration(labelText: 'Latitude', hintText: '38.123456', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), isDense: true))),
-                      const SizedBox(width: 8),
-                      Expanded(child: TextField(controller: lngController, keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true), decoration: InputDecoration(labelText: 'Longitude', hintText: '-78.123456', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), isDense: true))),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(child: OutlinedButton.icon(onPressed: _isGettingLocation ? null : captureCurrentGps, icon: _isGettingLocation ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.my_location, size: 18), label: const Text('Current GPS', style: TextStyle(fontSize: 12)))),
-                      const SizedBox(width: 8),
-                      Expanded(child: OutlinedButton.icon(onPressed: pickFromMapProgram, icon: const Icon(Icons.map_outlined, size: 18), label: const Text('Pick from Map', style: TextStyle(fontSize: 12)))),
-                    ],
-                  ),
-                  const Align(alignment: Alignment.centerLeft, child: Text('3 ways: manual entry, current GPS, or map picker — concatenated when needed: lat,lng', style: TextStyle(fontSize: 10, color: Colors.black54))),
-                ],
-              ),
+            GpsLocationSection(
+              nameController: nameController,
+              latController: latController,
+              lngController: lngController,
+              isGettingLocation: _isGettingLocation,
+              onCurrentGps: captureCurrentGps,
+              onPickMap: pickFromMapProgram,
             ),
             const SizedBox(height: 16),
-            const Text('PLACE NAME', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-            const SizedBox(height: 4),
-            TextField(controller: nameController, style: const TextStyle(fontWeight: FontWeight.w600), decoration: InputDecoration(hintText: 'e.g. Great campsite', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white)),
-            const SizedBox(height: 14),
-            const Text('ADDRESS (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-            const SizedBox(height: 4),
-            TextField(controller: addressController, decoration: InputDecoration(hintText: 'Optional address from map - single string', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), filled: true, fillColor: Colors.white, suffixIcon: IconButton(icon: const Icon(Icons.map), onPressed: pickFromMapProgram))),
-            const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 3, child: AspectRatio(aspectRatio: 1, child: buildPhotoBoxSquare())),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      NotesSection(
-                        controller: notesController,
-                        isExpanded: _notesExpanded,
-                        onToggle: () => setState(() => _notesExpanded = !_notesExpanded),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            PhotoDetailsSection(
+              isExpanded: _photoExpanded,
+              onToggle: () => setState(() => _photoExpanded = !_photoExpanded),
+              variant: PhotoDetailsVariant.poi,
+              photoFile: photoFile,
+              onPhotoAdd: openPhotoSheet,
+              onPhotoView: () => openFullPhotoViewer(photoFile!),
+              onPhotoEdit: openPhotoSheet,
+              valueController: valueController,
+              addressController: addressController,
+              onPickMap: pickFromMapProgram,
+              storageKey: 'photoDetailsExpanded_poi_edit',
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            NotesSection(
+              controller: notesController,
+              isExpanded: _notesExpanded,
+              onToggle: () => setState(() => _notesExpanded = !_notesExpanded),
+              storageKey: 'notesExpanded_poi_edit',
+            ),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              height: 46,
-              child: ElevatedButton(onPressed: handleSave, style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Save POI', style: TextStyle(fontWeight: FontWeight.bold))),
+              height: 50,
+              child: ElevatedButton(
+                onPressed: handleSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black87,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
             ),
           ],
         ),
@@ -290,27 +274,39 @@ class _MapPickSheetState extends State<_MapPickSheet> {
     lngCtrl = TextEditingController(text: widget.initialLng);
     addrCtrl = TextEditingController(text: widget.initialAddress);
   }
+
+  @override
+  void dispose() {
+    latCtrl.dispose();
+    lngCtrl.dispose();
+    addrCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (c, scroll) => Padding(
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
         padding: const EdgeInsets.all(16),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(children: [const Text('Pick from Map', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), const Spacer(), IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))]),
-            Container(height: 200, decoration: BoxDecoration(color: Colors.blueGrey.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)), child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.map, size: 48, color: Colors.blueGrey.shade300), const SizedBox(height: 8), const Text('Map View Placeholder - integrate google_maps_flutter'), const Text('Paste address string from map app', style: TextStyle(fontSize: 10, color: Colors.black45))]))),
+            const Text('Pick Location', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
-            TextField(controller: latCtrl, decoration: InputDecoration(labelText: 'Latitude', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
+            TextField(controller: latCtrl, decoration: const InputDecoration(labelText: 'Latitude', border: OutlineInputBorder())),
             const SizedBox(height: 8),
-            TextField(controller: lngCtrl, decoration: InputDecoration(labelText: 'Longitude', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
+            TextField(controller: lngCtrl, decoration: const InputDecoration(labelText: 'Longitude', border: OutlineInputBorder())),
             const SizedBox(height: 8),
-            TextField(controller: addrCtrl, decoration: InputDecoration(labelText: 'Address (single string from map)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))),
-            const Spacer(),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(context, {'lat': latCtrl.text, 'lng': lngCtrl.text, 'address': addrCtrl.text}), style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white), child: const Text('Use This Location'))),
+            TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Address', border: OutlineInputBorder())),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context, {'lat': latCtrl.text, 'lng': lngCtrl.text, 'address': addrCtrl.text}),
+                child: const Text('Use This Location'),
+              ),
+            ),
           ],
         ),
       ),

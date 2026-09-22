@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../location_repository.dart';
 import '../widgets/notes_section.dart';
 import '../widgets/photo_details_section.dart';
+import '../widgets/app_header.dart';
 import '../widgets/required_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -466,21 +467,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: const Color(0xFFF5F3EE),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF5F3EE),
-          elevation: 0,
-          leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black87), onPressed: () => Navigator.pop(context)),
-          title: RichText(
-            text: TextSpan(
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-              children: [
-                const TextSpan(text: 'Where', style: TextStyle(color: Colors.black87)),
-                const TextSpan(text: 'Log', style: TextStyle(color: Color(0xFFB91C1C))),
-                const TextSpan(text: ' - Edit Storage', style: TextStyle(color: Colors.black54, fontSize: 16, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        ),
+                appBar: const AppHeader(screenName: 'Edit Storage'),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -493,22 +480,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F3EE),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF5F3EE),
-          elevation: 0,
-          leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black87), onPressed: () async { final ok = await _confirmDiscard(); if (ok && context.mounted) Navigator.pop(context); }),
-          title: RichText(
-            text: TextSpan(
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-              children: [
-                const TextSpan(text: 'Where', style: TextStyle(color: Colors.black87)),
-                const TextSpan(text: 'Log', style: TextStyle(color: Color(0xFFB91C1C))),
-                const TextSpan(text: ' - Edit Storage', style: TextStyle(color: Colors.black54, fontSize: 16, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-          actions: [IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: handleDelete)],
-        ),
+                appBar: const AppHeader(screenName: 'Edit Storage'),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../location_repository.dart';
 import '../widgets/notes_section.dart';
 import '../widgets/photo_details_section.dart';
+import '../widgets/app_header.dart';
 import '../widgets/required_section.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -355,21 +356,7 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EE),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F3EE),
-        elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black87), onPressed: () => Navigator.pop(context)),
-        title: RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-            children: [
-              const TextSpan(text: 'Where', style: TextStyle(color: Colors.black87)),
-              const TextSpan(text: 'Log', style: TextStyle(color: Color(0xFFB91C1C))),
-              const TextSpan(text: ' - Add Inventory', style: TextStyle(color: Colors.black54, fontSize: 16, fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-      ),
+      appBar: const AppHeader(screenName: 'Add Inventory'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Column(

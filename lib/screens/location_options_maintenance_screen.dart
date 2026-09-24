@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../widgets/app_header.dart';
 import '../location_repository.dart';
 
 class LocationMaintenanceScreen extends StatefulWidget {
@@ -18,32 +19,35 @@ class _LocationMaintenanceScreenState extends State<LocationMaintenanceScreen> w
     const bg = Color(0xFFF5F3EE);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => Navigator.pop(context)),
-        title: const Text('Location Options', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 18)),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.black45,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-          indicatorColor: Colors.transparent,
-          indicatorWeight: 0.0001,
-          dividerColor: Colors.black12,
-          tabs: const [
-            Tab(icon: Icon(Icons.inventory_2_outlined, size: 20), text: 'Storage'),
-            Tab(icon: Icon(Icons.chair_alt_outlined, size: 20), text: 'Inventory'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _TreeTab(isStorage: true),
-          _TreeTab(isStorage: false),
+      appBar: const AppHeader(screenName: 'Location Options'),
+      body: Column(
+        children: [
+          Material(
+            color: bg,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.black45,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              indicatorColor: Colors.transparent,
+              indicatorWeight: 0.0001,
+              dividerColor: Colors.black12,
+              tabs: const [
+                Tab(icon: Icon(Icons.inventory_2_outlined, size: 20), text: 'Storage'),
+                Tab(icon: Icon(Icons.chair_alt_outlined, size: 20), text: 'Inventory'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                _TreeTab(isStorage: true),
+                _TreeTab(isStorage: false),
+              ],
+            ),
+          ),
         ],
       ),
     );

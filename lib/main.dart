@@ -10,6 +10,7 @@ import 'screens/inventory_edit_screen.dart';
 import 'screens/poi_add_screen.dart';
 import 'screens/poi_edit_screen.dart';
 import 'wherelog_repository.dart';
+import 'settings_service.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -59,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _tabIndex = 0;
+  List<String> _tabOrder = ['Storage','Inventory','POI'];
   String _searchQuery = '';
   bool _searchMode = false;
   String _sortBy = 'Recent';
@@ -303,12 +305,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<Item> inventoryItemsList = [];
 
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController
-        .addListener(() => setState(() => _tabIndex = _tabController.index));
+    _tabController.addListener(() => setState(() => _tabIndex = _tabController.index));
     places = _placesFromRepo();
     items = _itemsFromRepo();
     inventoryItemsList = _inventoryItemsFromRepo();
@@ -320,7 +322,54 @@ class _HomeScreenState extends State<HomeScreen>
           inventoryItemsList = _inventoryItemsFromRepo();
         });
     });
+    _loadTabOrder();
   }
+
+  Future<void> _loadTabOrder() async {
+    try {
+      final order = await SettingsService().getTabOrder();
+      if (order.length == 3 && mounted) {
+        setState(() => _tabOrder = List<String>.from(order));
+      }
+    } catch (_) {}
+  }
+
+  String get _currentTabName {
+    if (_tabIndex >=0 && _tabIndex < _tabOrder.length) return _tabOrder[_tabIndex];
+    return _tabOrder.isNotEmpty ? _tabOrder[0] : 'Storage';
+  }
+
+  Tab _tabForName(String name) {
+    if (name == 'Storage') {
+      return const Tab(text: 'Storage');
+    }
+    if (name == 'Inventory') {
+      return const Tab(text: 'Inventory');
+    }
+    if (name == 'POI') {
+      return const Tab(text: 'POI');
+    }
+    return Tab(text: name);
+  }
+
+  Widget _viewForName(String name) {
+    if (name == 'Storage') return _buildStorageTab();
+    if (name == 'Inventory') return _buildInventoryTab();
+    if (name == 'POI') return _buildPoiTab();
+    return _buildStorageTab();
+  }
+
+  void _openAppMenu() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AppMenuShell(),
+    ).then((_) {
+      _loadTabOrder();
+    });
+  }
+
 
   List<Item> get filteredItems {
     var list = items.where((i) {
@@ -420,20 +469,12 @@ class _HomeScreenState extends State<HomeScreen>
             labelPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 6),
             labelStyle: TextStyle(fontWeight: FontWeight.w800),
             unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
-            tabs: [
-              Tab(child: Text('Storage\nItems', textAlign: TextAlign.center, style: TextStyle(height: 1.1, fontSize: 13))),
-              Tab(child: Text('Home\nInventory', textAlign: TextAlign.center, style: TextStyle(height: 1.1, fontSize: 13))),
-              Tab(child: Text('Places of\nInterest', textAlign: TextAlign.center, style: TextStyle(height: 1.1, fontSize: 13))),
-            ],
+            tabs: _tabOrder.map(_tabForName).toList(),
           ),
         ),
-        if (_tabIndex == 0 || _tabIndex == 1) _buildSearchFilterBar(),
+        if (_currentTabName == 'Storage' || _currentTabName == 'Inventory') _buildSearchFilterBar(),
         Expanded(
-            child: TabBarView(controller: _tabController, children: [
-          _buildStorageTab(),
-          _buildInventoryTab(),
-          _buildPoiTab(),
-        ])),
+            child: TabBarView(controller: _tabController, children: _tabOrder.map(_viewForName).toList())),
       ]),
       bottomNavigationBar: _selectMode
           ? Container(
@@ -1187,15 +1228,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _openAppMenu() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const AppMenuShell(),
-    );
-  }
-
+  
   
 }
 

@@ -65,8 +65,32 @@ class _HomeScreenState extends State<HomeScreen>
   bool _searchMode = false;
   String _sortBy = 'Recent';
   String _filterBy = 'All';
-  bool _selectMode = false;
-  Set<String> _selectedIds = {};
+  // INDEPENDENT SELECT MODE PER TAB - each tab owns its own state
+  Map<String, bool> _selectModes = {'Storage': false, 'Inventory': false, 'POI': false};
+  Map<String, Set<String>> _selectedIdsMap = {'Storage': <String>{}, 'Inventory': <String>{}, 'POI': <String>{}};
+
+  bool get _selectMode => _selectModes[_currentTabName] ?? false;
+  set _selectMode(bool v) => _selectModes[_currentTabName] = v;
+  Set<String> get _selectedIds => _selectedIdsMap[_currentTabName] ?? <String>{};
+  set _selectedIds(Set<String> v) => _selectedIdsMap[_currentTabName] = v;
+
+  bool _isSelectMode(String tab) => _selectModes[tab] ?? false;
+  Set<String> _idsFor(String tab) => _selectedIdsMap[tab] ?? <String>{};
+  int _selectedCountFor(String tab) => _selectedIdsMap[tab]?.length ?? 0;
+
+  void _enterSelectMode(String tab) {
+    setState(() {
+      _selectModes[tab] = true;
+      _selectedIdsMap[tab] = <String>{};
+    });
+  }
+
+  void _exitSelectMode(String tab) {
+    setState(() {
+      _selectModes[tab] = false;
+      _selectedIdsMap[tab] = <String>{};
+    });
+  }
   final TextEditingController _searchController = TextEditingController();
   final WhereLogRepository _repo = WhereLogRepository();
   double? currentLat;
@@ -340,14 +364,27 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Tab _tabForName(String name) {
-    if (name == 'Storage') {
-      return const Tab(text: 'Storage');
+    // Two-line labels as requested: Storage = Storage Items, Inventory = Home Inventory, POI = Places of Interest
+    if (name == 'Storage' || name == 'Storage Items' || name == 'Stored Items') {
+      return const Tab(
+        child: Text('Storage\nItems',
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.0)),
+      );
     }
-    if (name == 'Inventory') {
-      return const Tab(text: 'Inventory');
+    if (name == 'Inventory' || name == 'Home Inventory') {
+      return const Tab(
+        child: Text('Home\nInventory',
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.0)),
+      );
     }
-    if (name == 'POI') {
-      return const Tab(text: 'POI');
+    if (name == 'POI' || name == 'Places of Interest') {
+      return const Tab(
+        child: Text('Places of\nInterest',
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.0)),
+      );
     }
     return Tab(text: name);
   }
@@ -467,8 +504,8 @@ class _HomeScreenState extends State<HomeScreen>
             indicatorPadding: EdgeInsets.symmetric(horizontal: 4),
             indicatorSize: TabBarIndicatorSize.tab,
             labelPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-            labelStyle: TextStyle(fontWeight: FontWeight.w800),
-            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
+            labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, height: 1.1),
+            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 1.1),
             tabs: _tabOrder.map(_tabForName).toList(),
           ),
         ),
@@ -476,13 +513,7 @@ class _HomeScreenState extends State<HomeScreen>
         Expanded(
             child: TabBarView(controller: _tabController, children: _tabOrder.map(_viewForName).toList())),
       ]),
-      bottomNavigationBar: _selectMode
-          ? Container(
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: SafeArea(child: _buildSelectBottomBar()),
-            )
-          : null,
+      bottomNavigationBar: null, // Per-tab bars handle select independently
     );
   }
 
@@ -512,8 +543,8 @@ class _HomeScreenState extends State<HomeScreen>
                     _searchQuery = '';
                     _searchController.clear();
                   }),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-              child: Text('DONE', style: TextStyle(color: Colors.white))),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              child: Text('DONE')),
         ]),
       );
     }
@@ -526,17 +557,12 @@ class _HomeScreenState extends State<HomeScreen>
             style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w600)),
         if (isFilterActive) ...[
           SizedBox(width: 8),
-          TextButton.icon(
+          ElevatedButton(
             onPressed: () => setState(() {
               _filterBy = 'All';
             }),
-            icon: Icon(Icons.filter_alt_off, size: 16),
-            label: Text('Clear filter'),
-            style: TextButton.styleFrom(
-              foregroundColor: Color(0xFFB91C1C),
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              visualDensity: VisualDensity.compact,
-            ),
+            child: Text('Clear filter'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           ),
         ],
         Spacer(),
@@ -550,31 +576,34 @@ class _HomeScreenState extends State<HomeScreen>
 
   // === MULTIPLE SETS OF BUTTONS RESIDING ON TABS - each tab owns its own set ===
   Widget _buildStorageTab() {
+    final isSel = _isSelectMode('Storage');
     return Container(
       color: Color(0xFFF5F3EE),
       child: Column(children: [
         Expanded(child: _buildStorageList()),
-        _buildStorageActionBar(),
+        isSel ? _buildSelectActionBarFor('Storage') : _buildStorageActionBar(),
       ]),
     );
   }
 
   Widget _buildInventoryTab() {
+    final isSel = _isSelectMode('Inventory');
     return Container(
       color: Color(0xFFF5F3EE),
       child: Column(children: [
         Expanded(child: _buildInventoryList()),
-        _buildInventoryActionBar(),
+        isSel ? _buildSelectActionBarFor('Inventory') : _buildInventoryActionBar(),
       ]),
     );
   }
 
   Widget _buildPoiTab() {
+    final isSel = _isSelectMode('POI');
     return Container(
       color: Color(0xFFF5F3EE),
       child: Column(children: [
         Expanded(child: _buildPoiList()),
-        _buildPoiActionBar(),
+        isSel ? _buildSelectActionBarFor('POI') : _buildPoiActionBar(),
       ]),
     );
   }
@@ -599,11 +628,10 @@ class _HomeScreenState extends State<HomeScreen>
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: ElevatedButton(
                   onPressed: _isLoadingLocation ? null : fetchCurrentForDistance,
-                  icon: _isLoadingLocation ? SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(Icons.near_me, size: 16),
-                  label: Text('Calc Distance from Current', style: TextStyle(fontSize: 11)),
-                  style: OutlinedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 8)),
+                  child: Text('Calc Distance from Current', style: TextStyle(fontSize: 11)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 ),
               ),
             ]),
@@ -621,22 +649,32 @@ class _HomeScreenState extends State<HomeScreen>
                 final address = (poi['address'] ?? '').toString();
                 final distM = calcDistanceMeters(lat, lng);
                 final distStr = formatDistance(distM);
+                final poiId = (poi['id'] ?? poi['name'] ?? '').toString();
+                final isSelected = _idsFor('POI').contains(poiId);
                 return Card(
                   margin: EdgeInsets.only(bottom: 8),
-                  color: Color(0xFFFAF6F0),
+                  color: isSelected ? Color(0xFFE8F0FF) : Color(0xFFFAF6F0),
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.black12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
                   child: ListTile(
                     onTap: () async {
+                      if (_isSelectMode('POI')) {
+                        setState(() {
+                          if (isSelected) _selectedIdsMap['POI']!.remove(poiId);
+                          else _selectedIdsMap['POI']!.add(poiId);
+                        });
+                        return;
+                      }
                       final repoIdx = _findPoiRepoIndex(poi);
-                      if (repoIdx < 0) return;
                       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PoiEditScreen(itemIndex: repoIdx)));
                       if (mounted) {
                         await _repo.load();
                         setState(() {});
                       }
                     },
-                    leading: Container(width: 48, height: 48, decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.location_on, color: Colors.blue.shade700)),
+                    leading: _isSelectMode('POI')
+                        ? Checkbox(value: isSelected, onChanged: (v) => setState(() { if (v == true) _selectedIdsMap['POI']!.add(poiId); else _selectedIdsMap['POI']!.remove(poiId); }))
+                        : Container(width: 48, height: 48, decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.location_on, color: Colors.blue.shade700)),
                     title: Text(name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                     subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       SizedBox(height: 4),
@@ -644,7 +682,7 @@ class _HomeScreenState extends State<HomeScreen>
                       if (distStr.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Container(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(8)), child: Text(distStr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade700)))),
                       if (address.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Text(address, style: TextStyle(fontSize: 11, color: Colors.black54), maxLines: 1, overflow: TextOverflow.ellipsis)),
                     ]),
-                    trailing: Icon(Icons.chevron_right),
+                    trailing: _isSelectMode('POI') ? null : Icon(Icons.chevron_right),
                   ),
                 );
               },
@@ -662,19 +700,14 @@ class _HomeScreenState extends State<HomeScreen>
       child: SafeArea(
         child: Row(children: [
           Expanded(
-              child: OutlinedButton(
+              child: ElevatedButton(
                   key: ValueKey('storage_select'),
-                  onPressed: () => setState(() {
-                        _selectMode = true;
-                        _selectedIds.clear();
-                      }),
+                  onPressed: () => _enterSelectMode('Storage'),
                   child: Text('SELECT'),
-                  style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.black)))),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
           SizedBox(width: 12),
           Expanded(
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                   key: ValueKey('storage_add_item'),
                   onPressed: () async {
                     await Navigator.of(context).push(
@@ -688,12 +721,8 @@ class _HomeScreenState extends State<HomeScreen>
                       });
                     }
                   },
-                  icon: Icon(Icons.add),
-                  label: Text('STORAGE ITEM'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16)))),
+                  child: Text('+ Add'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
         ]),
       ),
     );
@@ -706,19 +735,14 @@ class _HomeScreenState extends State<HomeScreen>
       child: SafeArea(
         child: Row(children: [
           Expanded(
-              child: OutlinedButton(
+              child: ElevatedButton(
                   key: ValueKey('inventory_select'),
-                  onPressed: () => setState(() {
-                        _selectMode = true;
-                        _selectedIds.clear();
-                      }),
+                  onPressed: () => _enterSelectMode('Inventory'),
                   child: Text('SELECT'),
-                  style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.black)))),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
           SizedBox(width: 12),
           Expanded(
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                   key: ValueKey('inventory_add_item'),
                   onPressed: () async {
                     await Navigator.of(context).push(
@@ -732,12 +756,8 @@ class _HomeScreenState extends State<HomeScreen>
                       });
                     }
                   },
-                  icon: Icon(Icons.add),
-                  label: Text('INVENTORY ITEM'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16)))),
+                  child: Text('+ Add'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
         ]),
       ),
     );
@@ -750,18 +770,14 @@ class _HomeScreenState extends State<HomeScreen>
       child: SafeArea(
         child: Row(children: [
           Expanded(
-              child: OutlinedButton(
-                  onPressed: () => setState(() {
-                        _selectMode = true;
-                        _selectedIds.clear();
-                      }),
+              child: ElevatedButton(
+                  key: ValueKey('poi_select'),
+                  onPressed: () => _enterSelectMode('POI'),
                   child: Text('SELECT'),
-                  style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.black)))),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
           SizedBox(width: 12),
           Expanded(
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                   key: ValueKey('poi_add_item'),
                   onPressed: () async {
                     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PoiAddScreen()));
@@ -770,12 +786,8 @@ class _HomeScreenState extends State<HomeScreen>
                       setState(() {});
                     }
                   },
-                  icon: Icon(Icons.add),
-                  label: Text('POI ITEM'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16)))),
+                  child: Text('+ Add'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
         ]),
       ),
     );
@@ -786,43 +798,50 @@ class _HomeScreenState extends State<HomeScreen>
     return SizedBox.shrink();
   }
 
+    Widget _buildSelectActionBarFor(String tabName) {
+    final selectedCount = _selectedCountFor(tabName);
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('$selectedCount selected in $tabName', style: TextStyle(fontWeight: FontWeight.w800)),
+          SizedBox(height: 8),
+          Row(children: [
+            Expanded(
+              child: ElevatedButton(
+                key: ValueKey('${tabName.toLowerCase()}_cancel'),
+                onPressed: () => _exitSelectMode(tabName),
+                child: Text('CANCEL'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              ),
+            ),
+            SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                key: ValueKey('${tabName.toLowerCase()}_move'),
+                onPressed: selectedCount == 0 ? null : () => _moveSelectedItems(tabName),
+                child: Text('MOVE'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              ),
+            ),
+            SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                key: ValueKey('${tabName.toLowerCase()}_delete'),
+                onPressed: selectedCount == 0 ? null : () => _deleteSelectedItems(tabName),
+                child: Text('DELETE'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              ),
+            ),
+          ]),
+        ]),
+      ),
+    );
+  }
+
   Widget _buildSelectBottomBar() {
-    final selectedCount = _selectedIds.length;
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('$selectedCount selected', style: TextStyle(fontWeight: FontWeight.w800)),
-      SizedBox(height: 8),
-      Row(children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => setState(() {
-              _selectMode = false;
-              _selectedIds.clear();
-            }),
-            icon: Icon(Icons.close),
-            label: Text('CANCEL'),
-            style: OutlinedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)),
-          ),
-        ),
-        SizedBox(width: 8),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: selectedCount == 0 ? null : () => _moveSelectedItems(),
-            icon: Icon(Icons.drive_file_move_outlined),
-            label: Text('MOVE'),
-            style: OutlinedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)),
-          ),
-        ),
-        SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: selectedCount == 0 ? null : () => _deleteSelectedItems(),
-            icon: Icon(Icons.delete_outline),
-            label: Text('DELETE'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14)),
-          ),
-        ),
-      ]),
-    ]);
+    return _buildSelectActionBarFor(_currentTabName);
   }
 
 
@@ -834,7 +853,7 @@ class _HomeScreenState extends State<HomeScreen>
         itemCount: filteredItems.length,
         itemBuilder: (c, i) {
           final item = filteredItems[i];
-          final isSelected = _selectedIds.contains(item.id);
+          final isSelected = _idsFor('Storage').contains(item.id);
           final locationLabel =
               item.bin == null ? item.place : '${item.place} / ${item.bin}';
           return Card(
@@ -846,10 +865,10 @@ class _HomeScreenState extends State<HomeScreen>
                 side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
             child: ListTile(
               onTap: () async {
-                if (_selectMode) {
+                if (_isSelectMode('Storage')) {
                   setState(() {
-                    if (isSelected) _selectedIds.remove(item.id);
-                    else _selectedIds.add(item.id);
+                    if (isSelected) _selectedIdsMap['Storage']!.remove(item.id);
+                    else _selectedIdsMap['Storage']!.add(item.id);
                   });
                   return;
                 }
@@ -867,10 +886,10 @@ class _HomeScreenState extends State<HomeScreen>
                   });
                 }
               },
-              leading: _selectMode
+              leading: _isSelectMode('Storage')
                   ? Checkbox(value: isSelected, onChanged: (v) => setState(() {
-                      if (v == true) _selectedIds.add(item.id);
-                      else _selectedIds.remove(item.id);
+                      if (v == true) _selectedIdsMap['Storage']!.add(item.id);
+                      else _selectedIdsMap['Storage']!.remove(item.id);
                     }))
                   : Container(
                       width: 48,
@@ -891,7 +910,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Text(locationLabel,
                       style: TextStyle(
                           fontSize: 12, fontWeight: FontWeight.w600))),
-              trailing: _selectMode ? null : Icon(Icons.chevron_right),
+              trailing: _isSelectMode('Storage') ? null : Icon(Icons.chevron_right),
             ),
           );
         },
@@ -907,7 +926,7 @@ class _HomeScreenState extends State<HomeScreen>
         itemCount: filteredInventoryItems.length,
         itemBuilder: (c, i) {
           final item = filteredInventoryItems[i];
-          final isSelected = _selectedIds.contains(item.id);
+          final isSelected = _idsFor('Inventory').contains(item.id);
           final locationLabel = item.bin == null ? item.place : '${item.place} / ${item.bin}';
           return Card(
             margin: EdgeInsets.only(bottom: 8),
@@ -916,10 +935,10 @@ class _HomeScreenState extends State<HomeScreen>
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
             child: ListTile(
               onTap: () async {
-                if (_selectMode) {
+                if (_isSelectMode('Inventory')) {
                   setState(() {
-                    if (isSelected) _selectedIds.remove(item.id);
-                    else _selectedIds.add(item.id);
+                    if (isSelected) _selectedIdsMap['Inventory']!.remove(item.id);
+                    else _selectedIdsMap['Inventory']!.add(item.id);
                   });
                   return;
                 }
@@ -936,10 +955,10 @@ class _HomeScreenState extends State<HomeScreen>
                   });
                 }
               },
-              leading: _selectMode
+              leading: _isSelectMode('Inventory')
                   ? Checkbox(value: isSelected, onChanged: (v) => setState(() {
-                      if (v == true) _selectedIds.add(item.id);
-                      else _selectedIds.remove(item.id);
+                      if (v == true) _selectedIdsMap['Inventory']!.add(item.id);
+                      else _selectedIdsMap['Inventory']!.remove(item.id);
                     }))
                   : Container(
                       width: 48,
@@ -952,7 +971,7 @@ class _HomeScreenState extends State<HomeScreen>
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(color: Color(0xFFF0EDE8), borderRadius: BorderRadius.circular(12)),
                   child: Text(locationLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-              trailing: _selectMode ? null : Icon(Icons.chevron_right),
+              trailing: _isSelectMode('Inventory') ? null : Icon(Icons.chevron_right),
             ),
           );
         },
@@ -1042,7 +1061,7 @@ class _HomeScreenState extends State<HomeScreen>
                         SizedBox(height: 20),
                         Row(children: [
                           Expanded(
-                              child: OutlinedButton(
+                              child: ElevatedButton(
                                   onPressed: () {
                                     setState(() {
                                       _filterBy = 'All';
@@ -1050,7 +1069,8 @@ class _HomeScreenState extends State<HomeScreen>
                                     });
                                     Navigator.pop(c);
                                   },
-                                  child: Text('RESET'))),
+                                  child: Text('RESET'),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
                           SizedBox(width: 12),
                           Expanded(
                               child: ElevatedButton(
@@ -1058,10 +1078,8 @@ class _HomeScreenState extends State<HomeScreen>
                                     setState(() {});
                                     Navigator.pop(c);
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFF0F1E3A)),
-                                  child: Text('APPLY',
-                                      style: TextStyle(color: Colors.white)))),
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                                  child: Text('APPLY'))),
                         ]),
                       ]),
                 );
@@ -1080,8 +1098,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // NEW: Select actions - move & delete - all dialogs top of screen
-  Future<void> _moveSelectedItems() async {
-    if (_selectedIds.isEmpty) return;
+  Future<void> _moveSelectedItems([String? tabName]) async {
+    final String effectiveTab = tabName ?? _currentTabName;
+    final Set<String> currentSelected = _selectedIdsMap[effectiveTab] ?? <String>{};
+    if (currentSelected.isEmpty) return;
     final placesList = _placesFromRepo();
     String? selectedPlace;
     String? selectedBin;
@@ -1102,7 +1122,7 @@ class _HomeScreenState extends State<HomeScreen>
               child: StatefulBuilder(builder: (c2, setModal) {
                 final bins = selectedPlace == null ? <String>[] : placesList.firstWhere((p) => p.name == selectedPlace, orElse: () => Place(name: '', bins: [])).bins.map((b) => b.name).toList();
                 return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('MOVE ${ _selectedIds.length } ITEMS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  Text('MOVE ${ currentSelected.length } ITEMS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                   SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     decoration: InputDecoration(labelText: 'Place', border: OutlineInputBorder()),
@@ -1119,11 +1139,11 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   SizedBox(height: 20),
                   Row(children: [
-                    Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(c), child: Text('CANCEL'))),
+                    Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c), child: Text('CANCEL'), style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
                     SizedBox(width: 12),
                     Expanded(child: ElevatedButton(
                       onPressed: selectedPlace == null ? null : () => Navigator.pop(c, true),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                       child: Text('MOVE'),
                     )),
                   ])
@@ -1136,8 +1156,8 @@ class _HomeScreenState extends State<HomeScreen>
     ).then((confirmed) async {
       if (confirmed != true || selectedPlace == null) return;
       // Apply move for current tab items
-      if (_tabIndex == 0) {
-        for (var id in _selectedIds.toList()) {
+      if (effectiveTab == 'Storage') {
+        for (var id in currentSelected.toList()) {
           final idx = _repo.storageItems.indexWhere((m) => m['id']?.toString() == id);
           if (idx >= 0) {
             final map = Map<String, dynamic>.from(_repo.storageItems[idx]);
@@ -1158,9 +1178,9 @@ class _HomeScreenState extends State<HomeScreen>
           }
         }
         await _repo.save();
-        setState(() { items = _itemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
-      } else {
-        for (var id in _selectedIds.toList()) {
+        setState(() { items = _itemsFromRepo(); _selectModes['Storage'] = false; _selectedIdsMap['Storage']!.clear(); });
+      } else if (effectiveTab == 'Inventory') {
+        for (var id in currentSelected.toList()) {
           final idx = _repo.inventoryItems.indexWhere((m) => m['id']?.toString() == id);
           if (idx >= 0) {
             final map = Map<String, dynamic>.from(_repo.inventoryItems[idx]);
@@ -1178,12 +1198,17 @@ class _HomeScreenState extends State<HomeScreen>
           }
         }
         await _repo.save();
-        setState(() { inventoryItemsList = _inventoryItemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
+        setState(() { inventoryItemsList = _inventoryItemsFromRepo(); _selectModes['Inventory'] = false; _selectedIdsMap['Inventory']!.clear(); });
+      } else if (effectiveTab == 'POI') {
+        setState(() { _selectModes['POI'] = false; _selectedIdsMap['POI']!.clear(); });
       }
     });
   }
 
-  Future<void> _deleteSelectedItems() async {
+  Future<void> _deleteSelectedItems([String? tabName]) async {
+    final String effectiveTab = tabName ?? _currentTabName;
+    final Set<String> currentSelected = _selectedIdsMap[effectiveTab] ?? <String>{};
+    if (currentSelected.isEmpty) return;
     final confirmed = await showGeneralDialog<bool>(
       context: context,
       barrierDismissible: true,
@@ -1201,14 +1226,14 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.warning_amber_rounded, size: 48, color: Colors.red),
                 SizedBox(height: 12),
-                Text('Delete ${ _selectedIds.length } items?', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                Text('Delete ${ currentSelected.length } items?', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                 SizedBox(height: 8),
                 Text('This cannot be undone.', style: TextStyle(color: Colors.black54)),
                 SizedBox(height: 20),
                 Row(children: [
-                  Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(c, false), child: Text('CANCEL'))),
+                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, false), child: Text('CANCEL'), style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
                   SizedBox(width: 12),
-                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), child: Text('DELETE'))),
+                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('DELETE'))),
                 ])
               ]),
             ),
@@ -1217,14 +1242,18 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
     if (confirmed != true) return;
-    if (_tabIndex == 0) {
-      _repo.storageItems.removeWhere((m) => _selectedIds.contains(m['id']?.toString()));
+    if (effectiveTab == 'Storage') {
+      _repo.storageItems.removeWhere((m) => currentSelected.contains(m['id']?.toString()));
       await _repo.save();
-      setState(() { items = _itemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
-    } else {
-      _repo.inventoryItems.removeWhere((m) => _selectedIds.contains(m['id']?.toString()));
+      setState(() { items = _itemsFromRepo(); _selectModes['Storage'] = false; _selectedIdsMap['Storage']!.clear(); });
+    } else if (effectiveTab == 'Inventory') {
+      _repo.inventoryItems.removeWhere((m) => currentSelected.contains(m['id']?.toString()));
       await _repo.save();
-      setState(() { inventoryItemsList = _inventoryItemsFromRepo(); _selectMode = false; _selectedIds.clear(); });
+      setState(() { inventoryItemsList = _inventoryItemsFromRepo(); _selectModes['Inventory'] = false; _selectedIdsMap['Inventory']!.clear(); });
+    } else if (effectiveTab == 'POI') {
+      _repo.poiItems.removeWhere((m) => currentSelected.contains(m['id']?.toString()));
+      await _repo.save();
+      setState(() { _selectModes['POI'] = false; _selectedIdsMap['POI']!.clear(); });
     }
   }
 
@@ -1336,33 +1365,23 @@ class _LocationsSheetState extends State<LocationsSheet> {
                           padding: EdgeInsets.all(4),
                           child: Row(children: [
                             Expanded(
-                                child: ElevatedButton.icon(
+                                child: ElevatedButton(
                                     onPressed: () =>
                                         setState(() => editMode = false),
-                                    icon: Icon(Icons.visibility_outlined),
-                                    label: Text('View'),
+                                    child: Text('View'),
                                     style: ElevatedButton.styleFrom(
-                                        backgroundColor: editMode
-                                            ? Colors.white
-                                            : Colors.black,
-                                        foregroundColor: editMode
-                                            ? Colors.black
-                                            : Colors.white,
-                                        shape: StadiumBorder()))),
+                                        backgroundColor: Colors.black87,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
                             Expanded(
-                                child: ElevatedButton.icon(
+                                child: ElevatedButton(
                                     onPressed: () =>
                                         setState(() => editMode = true),
-                                    icon: Icon(Icons.edit_outlined),
-                                    label: Text('Edit'),
+                                    child: Text('Edit'),
                                     style: ElevatedButton.styleFrom(
-                                        backgroundColor: editMode
-                                            ? Colors.black
-                                            : Colors.white,
-                                        foregroundColor: editMode
-                                            ? Colors.white
-                                            : Colors.black,
-                                        shape: StadiumBorder()))),
+                                        backgroundColor: Colors.black87,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
                           ])),
                       SizedBox(height: 12),
                       Text(

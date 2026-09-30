@@ -31,6 +31,10 @@
     {
       "id": "stogen_008",
       "name": "Out Building #2"
+    },
+    {
+      "id": "stogen_009",
+      "name": "Bathroom"
     }
   ],
   "storageSpecifics": [
@@ -153,6 +157,26 @@
       "id": "stospec_024",
       "generalId": "stogen_008",
       "name": "Drawer 11"
+    },
+    {
+      "id": "stospec_025",
+      "generalId": "stogen_009",
+      "name": ""
+    },
+    {
+      "id": "stospec_026",
+      "generalId": "stogen_009",
+      "name": "Sink cabinet"
+    },
+    {
+      "id": "stospec_027",
+      "generalId": "stogen_001",
+      "name": "Refrigerator top"
+    },
+    {
+      "id": "stospec_028",
+      "generalId": "stogen_004",
+      "name": "Under Green Tarp"
     }
   ],
   "storageItems": [
@@ -166,11 +190,27 @@
     },
     {
       "id": "stoitem_002",
-      "name": "Sand Paper",
+      "name": "Sand Paper Disks",
+      "generalId": "stogen_001",
       "specificId": "stospec_003",
+      "general": "Garage",
+      "specific": "Yellow Box",
+      "tier1": "Garage",
+      "tier2": "Yellow Box",
+      "place": "Garage",
+      "bin": "Yellow Box",
+      "location": "Garage / Yellow Box",
+      "qty": 1,
+      "quantity": 1,
+      "value": null,
+      "valueAmount": "",
       "notes": "",
-      "image": null,
-      "createdAt": "2026-09-07T07:36:05.010989"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T07:36:05.010989",
+      "modifyDate": "2026-09-18T22:06:44.717536",
+      "updatedAt": "2026-09-18T22:06:44.717536",
+      "image": null
     },
     {
       "id": "stoitem_003",
@@ -257,6 +297,50 @@
       "modifyDate": "2026-09-14T18:26:02.399718",
       "updatedAt": "2026-09-14T18:26:02.399718",
       "id": "stoitem_009"
+    },
+    {
+      "name": "Hair dryer",
+      "generalId": "stogen_009",
+      "specificId": "stospec_026",
+      "general": "Bathroom",
+      "specific": "Sink cabinet",
+      "tier1": "Bathroom",
+      "tier2": "Sink cabinet",
+      "place": "Bathroom",
+      "bin": "Sink cabinet",
+      "location": "Bathroom / Sink cabinet",
+      "qty": 1,
+      "quantity": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-18T12:43:45.227218",
+      "modifyDate": "2026-09-18T12:43:45.227218",
+      "updatedAt": "2026-09-18T12:43:45.227218"
+    },
+    {
+      "name": "Candy bars",
+      "generalId": "stogen_002",
+      "specificId": "stospec_009",
+      "general": "Kitchen",
+      "specific": "Pantry Shelf",
+      "tier1": "Kitchen",
+      "tier2": "Pantry Shelf",
+      "place": "Kitchen",
+      "bin": "Pantry Shelf",
+      "location": "Kitchen / Pantry Shelf",
+      "qty": 1,
+      "quantity": 1,
+      "value": 33.0,
+      "valueAmount": "33",
+      "notes": "A detail added by me",
+      "photo": "C:\\Users\\rudy\\OneDrive\\Photos\\conversation.jpg",
+      "photoPath": "C:\\Users\\rudy\\OneDrive\\Photos\\conversation.jpg",
+      "createdAt": "2026-09-18T17:48:57.307386",
+      "modifyDate": "2026-09-18T17:48:57.307386",
+      "updatedAt": "2026-09-18T17:48:57.307386"
     }
   ],
   "inventoryGenerals": [
@@ -287,6 +371,10 @@
     {
       "id": "invgen_007",
       "name": "Out Building #1"
+    },
+    {
+      "id": "invgen_008",
+      "name": "Living Room"
     }
   ],
   "inventorySpecifics": [
@@ -399,6 +487,11 @@
       "id": "invspec_022",
       "generalId": "invgen_005",
       "name": "Bin 2"
+    },
+    {
+      "id": "invspec_023",
+      "generalId": "invgen_008",
+      "name": ""
     }
   ],
   "inventoryItems": [
@@ -436,11 +529,29 @@
     },
     {
       "id": "invitem_005",
-      "name": "Vege Food",
+      "name": "Vegetarian Food",
+      "generalId": "invgen_006",
       "specificId": "invspec_019",
+      "general": "Laundry Room",
+      "specific": "North Cabinet",
+      "tier1": "Laundry Room",
+      "tier2": "North Cabinet",
+      "place": "Laundry Room",
+      "bin": "North Cabinet",
+      "location": "Laundry Room / North Cabinet",
+      "serial_number": "",
+      "serial": "",
+      "acquisition_date": null,
+      "acquiredDate": null,
+      "value": null,
+      "valueAmount": "",
       "notes": "This is an additional detail.",
-      "image": null,
-      "createdAt": "2026-09-07T20:54:55.672319"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T20:54:55.672319",
+      "modifyDate": "2026-09-18T16:47:11.422500",
+      "updatedAt": "2026-09-18T16:47:11.422500",
+      "image": null
     },
     {
       "id": "invitem_006",
@@ -474,14 +585,14 @@
       "serial": "123456",
       "acquisition_date": "2026-09-02T00:00:00.000",
       "acquiredDate": "2026-09-02T00:00:00.000",
-      "value": 500.0,
-      "valueAmount": "500.00",
+      "value": 300.0,
+      "valueAmount": "300.00",
       "notes": "Notes and notes and still more notes",
       "photo": null,
       "photoPath": null,
       "createdAt": "2026-09-14T22:18:02.986702",
-      "modifyDate": "2026-09-14T22:21:46.201818",
-      "updatedAt": "2026-09-14T22:21:46.201818"
+      "modifyDate": "2026-09-18T22:12:55.067749",
+      "updatedAt": "2026-09-18T22:12:55.067749"
     },
     {
       "name": "Refrigerator",
@@ -506,6 +617,30 @@
       "createdAt": "2026-09-15T11:48:50.000565",
       "modifyDate": "2026-09-15T11:48:50.000565",
       "updatedAt": "2026-09-15T11:48:50.000565"
+    },
+    {
+      "name": "Olive Rocking Chairs",
+      "generalId": "invgen_008",
+      "specificId": "invspec_023",
+      "general": "Living Room",
+      "specific": "",
+      "tier1": "Living Room",
+      "tier2": "",
+      "place": "Living Room",
+      "bin": "",
+      "location": "Living Room",
+      "serial_number": "",
+      "serial": "",
+      "acquisition_date": null,
+      "acquiredDate": null,
+      "value": null,
+      "valueAmount": "",
+      "notes": "",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-18T22:09:30.926395",
+      "modifyDate": "2026-09-18T22:09:30.926395",
+      "updatedAt": "2026-09-18T22:09:30.926395"
     }
   ],
   "poiItems": [
@@ -521,8 +656,21 @@
       "createdAt": "2026-09-15T00:27:35.509219",
       "modifyDate": "2026-09-15T00:27:35.509219",
       "updatedAt": "2026-09-15T00:27:35.509219"
+    },
+    {
+      "id": "poi_1789488387564",
+      "name": "Crazy Place",
+      "lat": 55.98323,
+      "lng": 52.0989,
+      "address": "",
+      "notes": "Details is the deal.",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-15T12:06:27.562263",
+      "modifyDate": "2026-09-15T12:06:27.562263",
+      "updatedAt": "2026-09-15T12:06:27.562263"
     }
   ],
   "version": 5,
-  "savedAt": "2026-09-15T11:48:50.008241"
+  "savedAt": "2026-09-18T22:12:55.068794"
 }

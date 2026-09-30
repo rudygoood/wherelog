@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'location_options_maintenance_screen.dart';
 import 'settings_screen.dart';
+import 'export_import_screen.dart';
 
 class AppMenuShell extends StatelessWidget {
   const AppMenuShell({super.key});
@@ -49,7 +50,7 @@ class AppMenuShell extends StatelessWidget {
                       }
                     },
                   ),
-                  _menuTile(context, icon: Icons.upload_outlined, title: 'Data Export', subtitle: 'Backup, export JSON, import, clear', enabled: false),
+                  _menuTile(context, icon: Icons.import_export_outlined, title: 'Export / Import', subtitle: 'ZIP backup with photos, restore', onTap: () { Navigator.pop(context); Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ExportImportScreen())); }),
                   _menuTile(context, icon: Icons.contact_support_outlined, title: 'Contact / Support', subtitle: 'Feedback, report issue', enabled: false),
                   _menuTile(context, icon: Icons.help_outline, title: 'Help', subtitle: 'How to use WhereLog', enabled: false),
                   const Divider(height: 12, thickness: 0.5),

@@ -128,7 +128,7 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
     String specificId = '';
     String generalId = '';
     try {
-      final gen = _locationRepo.inventoryGenerals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
+      final gen = _locationRepo.generals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
       generalId = gen['id']?.toString() ?? '';
       if (sName.isNotEmpty) {
         final spec = _locationRepo.inventorySpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});

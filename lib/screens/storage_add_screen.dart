@@ -129,7 +129,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     String specificId = '';
     String generalId = '';
     try {
-      final gen = _locationRepo.storageGenerals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
+      final gen = _locationRepo.generals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
       generalId = gen['id']?.toString() ?? '';
       if (sName.isNotEmpty) {
         final spec = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});

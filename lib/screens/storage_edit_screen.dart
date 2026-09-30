@@ -140,7 +140,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
             sName = (spec['name'] ?? '').toString();
             final genId = spec['generalId']?.toString() ?? '';
             if (genId.isNotEmpty) {
-              final gen = _locationRepo.storageGenerals.firstWhere((g) => g['id'] == genId, orElse: () => {});
+              final gen = _locationRepo.generals.firstWhere((g) => g['id'] == genId, orElse: () => {});
               gName = (gen['name'] ?? '').toString();
             }
           } catch (_) {}

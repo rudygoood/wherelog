@@ -134,13 +134,8 @@ class _HomeScreenState extends State<HomeScreen>
       }
     }
 
-    // Use new v5 naming from repo - storageGenerals/storageSpecifics are source of truth
-    if (_repo.storageGenerals != null) {
-      addGeneralsAndSpecifics(_repo.storageGenerals, _repo.storageSpecifics ?? []);
-    }
-    if (_repo.inventoryGenerals != null) {
-      addGeneralsAndSpecifics(_repo.inventoryGenerals, _repo.inventorySpecifics ?? []);
-    }
+    // v6 single generals - canonical
+    addGeneralsAndSpecifics(_repo.generals, [..._repo.storageSpecifics, ..._repo.inventorySpecifics]);
 
     // Fallback for old repo that still has storageData map (during transition)
     if (generalsMap.isEmpty) {

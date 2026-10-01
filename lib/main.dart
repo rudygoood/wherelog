@@ -10,6 +10,7 @@ import 'screens/inventory_edit_screen.dart';
 import 'screens/poi_add_screen.dart';
 import 'screens/poi_edit_screen.dart';
 import 'wherelog_repository.dart';
+import 'theme/app_theme.dart';
 import 'settings_service.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -45,9 +46,8 @@ class WhereLogApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'WhereLog',
-      theme: ThemeData(scaffoldBackgroundColor: Color(0xFFF5F3EE), fontFamily: 'Inter'),
-      home: HomeScreen(),
-    );
+      theme: AppTheme.light(),
+      home: HomeScreen());
   }
 }
 
@@ -214,8 +214,7 @@ class _HomeScreenState extends State<HomeScreen>
         qty: (m['qty'] is int) ? m['qty'] : int.tryParse(m['qty']?.toString() ?? '1') ?? 1,
         place: place.isEmpty ? 'Garage' : place,
         bin: bin,
-        emoji: '📦',
-      );
+        emoji: '📦');
     }).toList();
   }
 
@@ -276,8 +275,7 @@ class _HomeScreenState extends State<HomeScreen>
         qty: (m['qty'] is int) ? m['qty'] : int.tryParse(m['qty']?.toString() ?? '1') ?? 1,
         place: place.isEmpty ? 'Garage' : place,
         bin: bin,
-        emoji: '🪑',
-      );
+        emoji: '🪑');
     }).toList();
   }
 
@@ -364,22 +362,19 @@ class _HomeScreenState extends State<HomeScreen>
       return const Tab(
         child: Text('Storage\nItems',
             textAlign: TextAlign.center,
-            style: TextStyle(height: 1.0)),
-      );
+            style: TextStyle(height: 1.0)));
     }
     if (name == 'Inventory' || name == 'Home Inventory') {
       return const Tab(
         child: Text('Home\nInventory',
             textAlign: TextAlign.center,
-            style: TextStyle(height: 1.0)),
-      );
+            style: TextStyle(height: 1.0)));
     }
     if (name == 'POI' || name == 'Places of Interest') {
       return const Tab(
         child: Text('Places of\nInterest',
             textAlign: TextAlign.center,
-            style: TextStyle(height: 1.0)),
-      );
+            style: TextStyle(height: 1.0)));
     }
     return Tab(text: name);
   }
@@ -396,8 +391,7 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const AppMenuShell(),
-    ).then((_) {
+      builder: (_) => const AppMenuShell()).then((_) {
       _loadTabOrder();
     });
   }
@@ -451,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFF5F3EE),
+        backgroundColor: AppColors.scaffold,
         elevation: 0,
         title: Row(children: [
           Image.asset('assets/icon/app_icon.png',
@@ -463,47 +457,36 @@ class _HomeScreenState extends State<HomeScreen>
               text: TextSpan(children: [
             TextSpan(
                 text: 'Where',
-                style: TextStyle(
-                    color: Color(0xFF1E90FF),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22)),
+                style: AppText.logoWhere),
             TextSpan(
                 text: 'Log',
-                style: TextStyle(
-                    color: Color(0xFFE53935),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22)),
+                style: AppText.logoLog),
           ])),
         ]),
         actions: [
           IconButton(
               icon: Icon(Icons.menu, color: Colors.black),
               onPressed: () => _openAppMenu())
-        ],
-      ),
+        ]),
       body: Column(children: [
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Color(0xFFEDE8DF),
-          ),
-          child: TabBar(
+            color: AppColors.scaffoldDark),
+                                    child: TabBar(
             controller: _tabController,
-            labelColor: Colors.black,
-            unselectedLabelColor: Colors.black54,
+            labelColor: AppColors.textPrimary,
+            unselectedLabelColor: AppColors.textSecondary,
             indicator: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12), topRight: Radius.circular(12)),
-            ),
+                  topLeft: Radius.circular(12), topRight: Radius.circular(12))),
             indicatorPadding: EdgeInsets.symmetric(horizontal: 4),
             indicatorSize: TabBarIndicatorSize.tab,
             labelPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-            labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, height: 1.1),
-            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 1.1),
-            tabs: _tabOrder.map(_tabForName).toList(),
-          ),
-        ),
+            labelStyle: AppText.tabSelected,
+            unselectedLabelStyle: AppText.tabUnselected,
+            tabs: _tabOrder.map(_tabForName).toList())),
         if (_currentTabName == 'Storage' || _currentTabName == 'Inventory') _buildSearchFilterBar(),
         Expanded(
             child: TabBarView(controller: _tabController, children: _tabOrder.map(_viewForName).toList())),
@@ -518,9 +501,9 @@ class _HomeScreenState extends State<HomeScreen>
     final hint = isStorage ? 'SEARCH STORAGE...' : 'SEARCH INVENTORY...';
     if (_searchMode) {
       return Container(
-        color: Color(0xFFF5F3EE),
+        color: AppColors.scaffold,
         padding: EdgeInsets.all(12),
-        child: Row(children: [
+                                    child: Row(children: [
           Expanded(
               child: TextField(
                   controller: _searchController,
@@ -538,99 +521,88 @@ class _HomeScreenState extends State<HomeScreen>
                     _searchQuery = '';
                     _searchController.clear();
                   }),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: Text('DONE')),
-        ]),
-      );
+                                    child: Text('DONE')),
+        ]));
     }
     final isFilterActive = _filterBy != 'All';
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(children: [
+                                    child: Row(children: [
         Text('$count ${isStorage ? 'storage' : 'inventory'} items',
-            style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w600)),
+            style: AppText.countBar),
         if (isFilterActive) ...[
           SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => setState(() {
               _filterBy = 'All';
             }),
-            child: Text('Clear filter'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-          ),
+                                    child: Text('Clear filter'),
+            ),
         ],
         Spacer(),
         IconButton(icon: Icon(Icons.tune), onPressed: () => _openFilterSheet()),
         IconButton(
             icon: Icon(Icons.search),
             onPressed: () => setState(() => _searchMode = true)),
-      ]),
-    );
+      ]));
   }
 
   // === MULTIPLE SETS OF BUTTONS RESIDING ON TABS - each tab owns its own set ===
   Widget _buildStorageTab() {
     final isSel = _isSelectMode('Storage');
     return Container(
-      color: Color(0xFFF5F3EE),
-      child: Column(children: [
+      color: AppColors.scaffold,
+                                    child: Column(children: [
         Expanded(child: _buildStorageList()),
         isSel ? _buildSelectActionBarFor('Storage') : _buildStorageActionBar(),
-      ]),
-    );
+      ]));
   }
 
   Widget _buildInventoryTab() {
     final isSel = _isSelectMode('Inventory');
     return Container(
-      color: Color(0xFFF5F3EE),
-      child: Column(children: [
+      color: AppColors.scaffold,
+                                    child: Column(children: [
         Expanded(child: _buildInventoryList()),
         isSel ? _buildSelectActionBarFor('Inventory') : _buildInventoryActionBar(),
-      ]),
-    );
+      ]));
   }
 
   Widget _buildPoiTab() {
     final isSel = _isSelectMode('POI');
     return Container(
-      color: Color(0xFFF5F3EE),
-      child: Column(children: [
+      color: AppColors.scaffold,
+                                    child: Column(children: [
         Expanded(child: _buildPoiList()),
         isSel ? _buildSelectActionBarFor('POI') : _buildPoiActionBar(),
-      ]),
-    );
+      ]));
   }
 
   Widget _buildPoiList() {
     return Container(
-      color: Color(0xFFF5F3EE),
-      child: Column(
+      color: AppColors.scaffold,
+                                    child: Column(
         children: [
           if (currentLat != null)
             Padding(
               padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: Row(children: [
+                                    child: Row(children: [
                 Icon(Icons.my_location, size: 14, color: Colors.blue),
                 SizedBox(width: 4),
-                Text('Distance from: ${currentLat!.toStringAsFixed(4)}, ${currentLng!.toStringAsFixed(4)}', style: TextStyle(fontSize: 10, color: Colors.black54)),
+                Text('Distance from: ${currentLat!.toStringAsFixed(4)}, ${currentLng!.toStringAsFixed(4)}', style: AppText.cardMetaSmall),
                 Spacer(),
                 InkWell(onTap: () => setState(() { currentLat = null; currentLng = null; }), child: Text('Clear', style: TextStyle(fontSize: 10, color: Colors.blue))),
-              ]),
-            ),
+              ])),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(children: [
+                                    child: Row(children: [
               Expanded(
                 child: ElevatedButton(
                   onPressed: _isLoadingLocation ? null : fetchCurrentForDistance,
-                  child: Text('Calc Distance from Current', style: TextStyle(fontSize: 11)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                ),
-              ),
-            ]),
-          ),
+                                    child: Text('Calc Distance from Current', style: TextStyle(fontSize: 11)),
+                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 8)))),
+            ])),
           Expanded(
             child: ListView.builder(
               padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -651,7 +623,7 @@ class _HomeScreenState extends State<HomeScreen>
                   color: isSelected ? Color(0xFFE8F0FF) : Color(0xFFFAF6F0),
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
-                  child: ListTile(
+                                    child: ListTile(
                     onTap: () async {
                       if (_isSelectMode('POI')) {
                         setState(() {
@@ -669,37 +641,31 @@ class _HomeScreenState extends State<HomeScreen>
                     },
                     leading: _isSelectMode('POI')
                         ? Checkbox(value: isSelected, onChanged: (v) => setState(() { if (v == true) _selectedIdsMap['POI']!.add(poiId); else _selectedIdsMap['POI']!.remove(poiId); }))
-                        : Container(width: 48, height: 48, decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.location_on, color: Colors.blue.shade700)),
-                    title: Text(name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                        : Container(width: 48, height: 48, decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(AppRadius.tabIndicator)), child: Icon(Icons.location_on, color: Colors.blue.shade700)),
+                    title: Text(name, style: AppText.cardTitle),
                     subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       SizedBox(height: 4),
-                      Container(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Color(0xFFF0EDE8), borderRadius: BorderRadius.circular(12)), child: Text(coords, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'monospace'))),
-                      if (distStr.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Container(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(8)), child: Text(distStr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade700)))),
-                      if (address.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Text(address, style: TextStyle(fontSize: 11, color: Colors.black54), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      Container(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Color(0xFFF0EDE8), borderRadius: BorderRadius.circular(AppRadius.tabIndicator)), child: Text(coords, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'monospace'))),
+                      if (distStr.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Container(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Color(0xFFE0F2FF), borderRadius: BorderRadius.circular(AppRadius.button)), child: Text(distStr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue.shade700)))),
+                      if (address.isNotEmpty) Padding(padding: EdgeInsets.only(top: 4), child: Text(address, style: AppText.cardMeta, maxLines: 1, overflow: TextOverflow.ellipsis)),
                     ]),
-                    trailing: _isSelectMode('POI') ? null : Icon(Icons.chevron_right),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+                    trailing: _isSelectMode('POI') ? null : Icon(Icons.chevron_right)));
+              })),
+        ]));
   }
 
   Widget _buildStorageActionBar() {
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SafeArea(
+                                    child: SafeArea(
         child: Row(children: [
           Expanded(
               child: ElevatedButton(
                   key: ValueKey('storage_select'),
                   onPressed: () => _enterSelectMode('Storage'),
-                  child: Text('SELECT'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                                    child: Text('SELECT'),
+                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)))),
           SizedBox(width: 12),
           Expanded(
               child: ElevatedButton(
@@ -716,25 +682,23 @@ class _HomeScreenState extends State<HomeScreen>
                       });
                     }
                   },
-                  child: Text('+ Add'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
-        ]),
-      ),
-    );
+                                    child: Text('+ Add'),
+                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)))),
+        ])));
   }
 
   Widget _buildInventoryActionBar() {
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SafeArea(
+                                    child: SafeArea(
         child: Row(children: [
           Expanded(
               child: ElevatedButton(
                   key: ValueKey('inventory_select'),
                   onPressed: () => _enterSelectMode('Inventory'),
-                  child: Text('SELECT'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                                    child: Text('SELECT'),
+                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)))),
           SizedBox(width: 12),
           Expanded(
               child: ElevatedButton(
@@ -751,25 +715,23 @@ class _HomeScreenState extends State<HomeScreen>
                       });
                     }
                   },
-                  child: Text('+ Add'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
-        ]),
-      ),
-    );
+                                    child: Text('+ Add'),
+                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)))),
+        ])));
   }
 
   Widget _buildPoiActionBar() {
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SafeArea(
+                                    child: SafeArea(
         child: Row(children: [
           Expanded(
               child: ElevatedButton(
                   key: ValueKey('poi_select'),
                   onPressed: () => _enterSelectMode('POI'),
-                  child: Text('SELECT'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                                    child: Text('SELECT'),
+                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)))),
           SizedBox(width: 12),
           Expanded(
               child: ElevatedButton(
@@ -781,11 +743,9 @@ class _HomeScreenState extends State<HomeScreen>
                       setState(() {});
                     }
                   },
-                  child: Text('+ Add'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
-        ]),
-      ),
-    );
+                                    child: Text('+ Add'),
+                  style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16)))),
+        ])));
   }
 
   Widget _buildNormalBottomBar() {
@@ -798,7 +758,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SafeArea(
+                                    child: SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text('$selectedCount selected in $tabName', style: TextStyle(fontWeight: FontWeight.w800)),
           SizedBox(height: 8),
@@ -807,32 +767,24 @@ class _HomeScreenState extends State<HomeScreen>
               child: ElevatedButton(
                 key: ValueKey('${tabName.toLowerCase()}_cancel'),
                 onPressed: () => _exitSelectMode(tabName),
-                child: Text('CANCEL'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              ),
-            ),
+                                    child: Text('CANCEL'),
+                style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)))),
             SizedBox(width: 8),
             Expanded(
               child: ElevatedButton(
                 key: ValueKey('${tabName.toLowerCase()}_move'),
                 onPressed: selectedCount == 0 ? null : () => _moveSelectedItems(tabName),
-                child: Text('MOVE'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              ),
-            ),
+                                    child: Text('MOVE'),
+                style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)))),
             SizedBox(width: 8),
             Expanded(
               child: ElevatedButton(
                 key: ValueKey('${tabName.toLowerCase()}_delete'),
                 onPressed: selectedCount == 0 ? null : () => _deleteSelectedItems(tabName),
-                child: Text('DELETE'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              ),
-            ),
+                                    child: Text('DELETE'),
+                style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 14)))),
           ]),
-        ]),
-      ),
-    );
+        ])));
   }
 
   Widget _buildSelectBottomBar() {
@@ -842,8 +794,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildStorageList() {
     return Container(
-      color: Color(0xFFF5F3EE),
-      child: ListView.builder(
+      color: AppColors.scaffold,
+                                    child: ListView.builder(
         padding: EdgeInsets.all(12),
         itemCount: filteredItems.length,
         itemBuilder: (c, i) {
@@ -858,7 +810,7 @@ class _HomeScreenState extends State<HomeScreen>
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
                 side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
-            child: ListTile(
+                                    child: ListTile(
               onTap: () async {
                 if (_isSelectMode('Storage')) {
                   setState(() {
@@ -871,8 +823,7 @@ class _HomeScreenState extends State<HomeScreen>
                 if (repoIdx < 0) return;
                 await Navigator.of(context).push(
                   MaterialPageRoute(
-                      builder: (_) => StorageEditScreen(itemIndex: repoIdx)),
-                );
+                      builder: (_) => StorageEditScreen(itemIndex: repoIdx)));
                 if (mounted) {
                   await _repo.load();
                   setState(() {
@@ -890,33 +841,29 @@ class _HomeScreenState extends State<HomeScreen>
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                          color: Color(0xFFF5F3EE),
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Center(
+                          color: AppColors.scaffold,
+                          borderRadius: BorderRadius.circular(AppRadius.tabIndicator)),
+                                    child: Center(
                           child: Text(item.emoji, style: TextStyle(fontSize: 24)))),
               title: Text(item.qty == 1 ? item.name : '(${item.qty}) ${item.name}',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  style: AppText.cardTitle),
               subtitle: Container(
                   margin: EdgeInsets.only(top: 4),
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                       color: Color(0xFFF0EDE8),
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Text(locationLabel,
+                      borderRadius: BorderRadius.circular(AppRadius.tabIndicator)),
+                                    child: Text(locationLabel,
                       style: TextStyle(
                           fontSize: 12, fontWeight: FontWeight.w600))),
-              trailing: _isSelectMode('Storage') ? null : Icon(Icons.chevron_right),
-            ),
-          );
-        },
-      ),
-    );
+              trailing: _isSelectMode('Storage') ? null : Icon(Icons.chevron_right)));
+        }));
   }
 
   Widget _buildInventoryList() {
     return Container(
-      color: Color(0xFFF5F3EE),
-      child: ListView.builder(
+      color: AppColors.scaffold,
+                                    child: ListView.builder(
         padding: EdgeInsets.all(12),
         itemCount: filteredInventoryItems.length,
         itemBuilder: (c, i) {
@@ -928,7 +875,7 @@ class _HomeScreenState extends State<HomeScreen>
             color: isSelected ? Color(0xFFE8F0FF) : Color(0xFFFAF6F0),
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: isSelected ? Colors.blue : Colors.black12)),
-            child: ListTile(
+                                    child: ListTile(
               onTap: () async {
                 if (_isSelectMode('Inventory')) {
                   setState(() {
@@ -940,8 +887,7 @@ class _HomeScreenState extends State<HomeScreen>
                 final repoIdx = _findInventoryRepoIndexForItem(item);
                 if (repoIdx < 0) return;
                 await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => InventoryEditScreen(itemIndex: repoIdx)),
-                );
+                  MaterialPageRoute(builder: (_) => InventoryEditScreen(itemIndex: repoIdx)));
                 if (mounted) {
                   await _repo.load();
                   setState(() {
@@ -958,20 +904,16 @@ class _HomeScreenState extends State<HomeScreen>
                   : Container(
                       width: 48,
                       height: 48,
-                      decoration: BoxDecoration(color: Color(0xFFF5F3EE), borderRadius: BorderRadius.circular(12)),
-                      child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 24)))),
-              title: Text(item.qty == 1 ? item.name : '(${item.qty}) ${item.name}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      decoration: BoxDecoration(color: AppColors.scaffold, borderRadius: BorderRadius.circular(AppRadius.tabIndicator)),
+                                    child: Center(child: Text(item.emoji, style: TextStyle(fontSize: 24)))),
+              title: Text(item.qty == 1 ? item.name : '(${item.qty}) ${item.name}', style: AppText.cardTitle),
               subtitle: Container(
                   margin: EdgeInsets.only(top: 4),
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: Color(0xFFF0EDE8), borderRadius: BorderRadius.circular(12)),
-                  child: Text(locationLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-              trailing: _isSelectMode('Inventory') ? null : Icon(Icons.chevron_right),
-            ),
-          );
-        },
-      ),
-    );
+                  decoration: BoxDecoration(color: Color(0xFFF0EDE8), borderRadius: BorderRadius.circular(AppRadius.tabIndicator)),
+                                    child: Text(locationLabel, style: AppText.cardLocation)),
+              trailing: _isSelectMode('Inventory') ? null : Icon(Icons.chevron_right)));
+        }));
   }
 
   void _openFilterSheet() {
@@ -984,25 +926,23 @@ class _HomeScreenState extends State<HomeScreen>
       pageBuilder: (c, a1, a2) {
         return Align(
           alignment: Alignment.topCenter,
-          child: Material(
+                                    child: Material(
             color: Colors.transparent,
-            child: Container(
+                                    child: Container(
               margin: EdgeInsets.only(top: 60, left: 12, right: 12),
               decoration: BoxDecoration(
                 color: Color(0xFFDCE7FF),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: StatefulBuilder(builder: (c, setModal) {
+                borderRadius: BorderRadius.circular(20)),
+                                    child: StatefulBuilder(builder: (c, setModal) {
                 return Padding(
                   padding: EdgeInsets.all(20),
-                  child: Column(
+                                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(children: [
-                          Text('FILTER & SORT',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w900, fontSize: 18)),
+                          Text(AppText.upper('Filter & Sort'),
+                              style: AppText.dialogTitle),
                           Spacer(),
                           IconButton(
                               icon: Icon(Icons.close),
@@ -1012,7 +952,7 @@ class _HomeScreenState extends State<HomeScreen>
                         Text('SORT BY',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black54)),
+                                color: AppColors.textSecondary)),
                         SizedBox(height: 8),
                         Wrap(
                             spacing: 8,
@@ -1031,7 +971,7 @@ class _HomeScreenState extends State<HomeScreen>
                         Text('FILTER',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black54)),
+                                color: AppColors.textSecondary)),
                         SizedBox(height: 8),
                         Wrap(
                             spacing: 8,
@@ -1064,8 +1004,8 @@ class _HomeScreenState extends State<HomeScreen>
                                     });
                                     Navigator.pop(c);
                                   },
-                                  child: Text('RESET'),
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                                    child: Text('RESET'),
+                                  )),
                           SizedBox(width: 12),
                           Expanded(
                               child: ElevatedButton(
@@ -1073,23 +1013,16 @@ class _HomeScreenState extends State<HomeScreen>
                                     setState(() {});
                                     Navigator.pop(c);
                                   },
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                                  child: Text('APPLY'))),
+                                    child: Text('APPLY'))),
                         ]),
-                      ]),
-                );
-              }),
-            ),
-          ),
-        );
+                      ]));
+              }))));
       },
       transitionBuilder: (c, anim, secAnim, child) {
         return SlideTransition(
           position: Tween(begin: Offset(0, -1), end: Offset(0, 0)).animate(anim),
-          child: child,
-        );
-      },
-    );
+                                    child: child);
+      });
   }
 
   // NEW: Select actions - move & delete - all dialogs top of screen
@@ -1108,13 +1041,13 @@ class _HomeScreenState extends State<HomeScreen>
       pageBuilder: (c, a1, a2) {
         return Align(
           alignment: Alignment.topCenter,
-          child: Material(
+                                    child: Material(
             color: Colors.transparent,
-            child: Container(
+                                    child: Container(
               margin: EdgeInsets.only(top: 80, left: 16, right: 16),
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-              child: StatefulBuilder(builder: (c2, setModal) {
+                                    child: StatefulBuilder(builder: (c2, setModal) {
                 final bins = selectedPlace == null ? <String>[] : placesList.firstWhere((p) => p.name == selectedPlace, orElse: () => Place(name: '', bins: [])).bins.map((b) => b.name).toList();
                 return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('MOVE ${ currentSelected.length } ITEMS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
@@ -1123,32 +1056,24 @@ class _HomeScreenState extends State<HomeScreen>
                     decoration: InputDecoration(labelText: 'Place', border: OutlineInputBorder()),
                     value: selectedPlace,
                     items: placesList.map((p) => DropdownMenuItem(value: p.name, child: Text(p.name))).toList(),
-                    onChanged: (v) => setModal(() { selectedPlace = v; selectedBin = null; }),
-                  ),
+                    onChanged: (v) => setModal(() { selectedPlace = v; selectedBin = null; })),
                   SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     decoration: InputDecoration(labelText: 'Bin (optional)', border: OutlineInputBorder()),
                     value: selectedBin,
                     items: bins.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-                    onChanged: (v) => setModal(() => selectedBin = v),
-                  ),
+                    onChanged: (v) => setModal(() => selectedBin = v)),
                   SizedBox(height: 20),
                   Row(children: [
-                    Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c), child: Text('CANCEL'), style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                    Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c), child: Text('CANCEL'), )),
                     SizedBox(width: 12),
                     Expanded(child: ElevatedButton(
                       onPressed: selectedPlace == null ? null : () => Navigator.pop(c, true),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                      child: Text('MOVE'),
-                    )),
+                                    child: Text('MOVE'))),
                   ])
                 ]);
-              }),
-            ),
-          ),
-        );
-      },
-    ).then((confirmed) async {
+              }))));
+      }).then((confirmed) async {
       if (confirmed != true || selectedPlace == null) return;
       // Apply move for current tab items
       if (effectiveTab == 'Storage') {
@@ -1212,30 +1137,26 @@ class _HomeScreenState extends State<HomeScreen>
       pageBuilder: (c, a1, a2) {
         return Align(
           alignment: Alignment.topCenter,
-          child: Material(
+                                    child: Material(
             color: Colors.transparent,
-            child: Container(
+                                    child: Container(
               margin: EdgeInsets.only(top: 80, left: 16, right: 16),
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                                    child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.warning_amber_rounded, size: 48, color: Colors.red),
                 SizedBox(height: 12),
                 Text('Delete ${ currentSelected.length } items?', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                 SizedBox(height: 8),
-                Text('This cannot be undone.', style: TextStyle(color: Colors.black54)),
+                Text('This cannot be undone.', style: AppText.cardMeta),
                 SizedBox(height: 20),
                 Row(children: [
-                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, false), child: Text('CANCEL'), style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, false), child: Text('CANCEL'), )),
                   SizedBox(width: 12),
-                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text('DELETE'))),
+                  Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(c, true),  child: Text('DELETE'))),
                 ])
-              ]),
-            ),
-          ),
-        );
-      },
-    );
+              ]))));
+      });
     if (confirmed != true) return;
     if (effectiveTab == 'Storage') {
       _repo.storageItems.removeWhere((m) => currentSelected.contains(m['id']?.toString()));
@@ -1301,9 +1222,9 @@ class _LocationsSheetState extends State<LocationsSheet> {
         builder: (c, scroll) {
           return SingleChildScrollView(
               controller: scroll,
-              child: Padding(
+                                    child: Padding(
                 padding: EdgeInsets.all(16),
-                child: Column(
+                                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
@@ -1312,7 +1233,7 @@ class _LocationsSheetState extends State<LocationsSheet> {
                             height: 40,
                             decoration: BoxDecoration(
                                 color: Colors.black, shape: BoxShape.circle),
-                            child:
+                                    child:
                                 Icon(Icons.location_on, color: Colors.white)),
                         SizedBox(width: 8),
                         Expanded(
@@ -1325,7 +1246,7 @@ class _LocationsSheetState extends State<LocationsSheet> {
                                       fontSize: 18)),
                               Text('Place / Room → Bin / Area • distinct bins',
                                   style: TextStyle(
-                                      fontSize: 12, color: Colors.black54))
+                                      fontSize: 12, color: AppColors.textSecondary))
                             ])),
                         IconButton(
                             icon: Icon(Icons.close),
@@ -1342,7 +1263,7 @@ class _LocationsSheetState extends State<LocationsSheet> {
                         Text('MODE',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black54)),
+                                color: AppColors.textSecondary)),
                         SizedBox(width: 8),
                         Chip(
                             label: Text(editMode ? 'EDIT MODE' : 'VIEW SAFE'),
@@ -1350,7 +1271,7 @@ class _LocationsSheetState extends State<LocationsSheet> {
                         Spacer(),
                         Text('default: View',
                             style:
-                                TextStyle(fontSize: 11, color: Colors.black54))
+                                AppText.cardMeta)
                       ]),
                       SizedBox(height: 8),
                       Container(
@@ -1358,25 +1279,19 @@ class _LocationsSheetState extends State<LocationsSheet> {
                               border: Border.all(color: Colors.black12),
                               borderRadius: BorderRadius.circular(24)),
                           padding: EdgeInsets.all(4),
-                          child: Row(children: [
+                                    child: Row(children: [
                             Expanded(
                                 child: ElevatedButton(
                                     onPressed: () =>
                                         setState(() => editMode = false),
                                     child: Text('View'),
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.black87,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                                    )),
                             Expanded(
                                 child: ElevatedButton(
                                     onPressed: () =>
                                         setState(() => editMode = true),
                                     child: Text('Edit'),
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.black87,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))),
+                                    )),
                           ])),
                       SizedBox(height: 12),
                       Text(
@@ -1388,8 +1303,8 @@ class _LocationsSheetState extends State<LocationsSheet> {
                       SizedBox(height: 12),
                       Container(
                           padding: EdgeInsets.all(12),
-                          color: Color(0xFFF5F3EE),
-                          child: Row(children: [
+                          color: AppColors.scaffold,
+                                    child: Row(children: [
                             Icon(Icons.error, size: 20),
                             SizedBox(width: 8),
                             Expanded(
@@ -1403,7 +1318,7 @@ class _LocationsSheetState extends State<LocationsSheet> {
                         final isExp = expanded.contains(p.name);
                         return Card(
                             margin: EdgeInsets.only(top: 8),
-                            child: Column(children: [
+                                    child: Column(children: [
                               ListTile(
                                   leading: IconButton(
                                       icon: Icon(isExp
@@ -1441,7 +1356,7 @@ class _LocationsSheetState extends State<LocationsSheet> {
                                                 color: Colors.black12),
                                             borderRadius:
                                                 BorderRadius.circular(12)),
-                                        child: Row(children: [
+                                    child: Row(children: [
                                           Text('${b.name} - ',
                                               style: TextStyle(
                                                   fontWeight: FontWeight.w800)),
@@ -1456,15 +1371,14 @@ class _LocationsSheetState extends State<LocationsSheet> {
                         Expanded(
                             child: OutlinedButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: Text('Done'))),
+                                    child: Text('Done'))),
                         SizedBox(width: 12),
                         Expanded(
                             child: Text(
                                 '${widget.places.length} Place • Bin • storage • ${editMode ? 'Edit combined' : 'View safe'}',
                                 style: TextStyle(fontWeight: FontWeight.bold)))
                       ])
-                    ]),
-              ));
+                    ])));
         });
   }
 }

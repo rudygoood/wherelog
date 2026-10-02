@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../location_repository.dart';
 import '../widgets/notes_section.dart';
 import '../widgets/photo_details_section.dart';
@@ -38,7 +39,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     showDialog(
       context: context,
       builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -52,7 +53,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(c),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
                   child: const Text('OK'),
                 ),
               ),
@@ -285,7 +286,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(c, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700, foregroundColor: AppColors.white),
             child: const Text('Delete'),
           ),
         ],
@@ -344,7 +345,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     await showDialog(
       context: context,
       builder: (c) => Dialog(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.buttonBg,
         insetPadding: const EdgeInsets.all(10),
         child: Stack(
           children: [
@@ -359,7 +360,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.white),
+                    icon: const Icon(Icons.edit, color: AppColors.white),
                     tooltip: 'Replace',
                     onPressed: () {
                       Navigator.pop(c);
@@ -367,7 +368,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(Icons.close, color: AppColors.white),
                     onPressed: () => Navigator.pop(c),
                   ),
                 ],
@@ -392,7 +393,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
 
   Widget _buildDistinctPlaceholder() {
     return Container(
-      color: Colors.white,
+      color: AppColors.white,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -400,7 +401,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
             Opacity(opacity: 0.68, child: Image.asset('assets/icon/app_icon.png', width: 64, height: 64, fit: BoxFit.contain)),
             const SizedBox(height: 6),
             const Text('No Photo', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 11)),
-            const Text('Tap to add', style: TextStyle(color: Colors.black54, fontSize: 10, fontWeight: FontWeight.w600)),
+            const Text('Tap to add', style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -420,11 +421,11 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
           openPhotoSheet();
         }
       },
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.button),
       child: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black38), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: AppColors.white, border: Border.all(color: AppColors.textDisabled), borderRadius: BorderRadius.circular(AppRadius.button)),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(9),
           child: hasPhoto
@@ -439,13 +440,13 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
                       bottom: 5,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(5)),
+                        decoration: BoxDecoration(color: AppColors.textSecondary, borderRadius: BorderRadius.circular(5)),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.zoom_in, size: 11, color: Colors.white),
+                            Icon(Icons.zoom_in, size: 11, color: AppColors.white),
                             SizedBox(width: 2),
-                            Text('View', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                            Text('View', style: TextStyle(color: AppColors.white, fontSize: 9, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -457,8 +458,8 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
                         onTap: openPhotoSheet,
                         child: Container(
                           padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: Colors.black26)),
-                          child: const Icon(Icons.edit, size: 12, color: Colors.black54),
+                          decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: AppColors.border)),
+                          child: const Icon(Icons.edit, size: 12, color: AppColors.textSecondary),
                         ),
                       ),
                     ),
@@ -476,7 +477,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF5F3EE),
+        backgroundColor: AppColors.scaffold,
                 appBar: const AppHeader(screenName: 'Edit Inventory'),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -489,7 +490,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
         if (ok && context.mounted) Navigator.pop(context);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F3EE),
+        backgroundColor: AppColors.scaffold,
                 appBar: const AppHeader(screenName: 'Edit Inventory'),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -539,7 +540,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
             Row(children: [
               Expanded(child: SizedBox(height: 44, child: OutlinedButton(onPressed: () async { final ok = await _confirmDiscard(); if (ok && mounted) Navigator.pop(context); }, child: const Text('Cancel')))),
               const SizedBox(width: 12),
-              Expanded(child: SizedBox(height: 44, child: ElevatedButton(onPressed: handleSave, style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white), child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold))))),
+              Expanded(child: SizedBox(height: 44, child: ElevatedButton(onPressed: handleSave, style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white), child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold))))),
             ]),
           ]),
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_header.dart';
 import '../widgets/gps_location_section.dart';
 import '../widgets/photo_details_section.dart';
@@ -48,7 +49,7 @@ class _PoiAddScreenState extends State<PoiAddScreen> {
     showDialog(
       context: context,
       builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -62,7 +63,7 @@ class _PoiAddScreenState extends State<PoiAddScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(c),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white),
                   child: const Text('OK'),
                 ),
               ),
@@ -132,7 +133,7 @@ class _PoiAddScreenState extends State<PoiAddScreen> {
           Positioned(
             right: 8,
             top: 8,
-            child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(c)),
+            child: IconButton(icon: const Icon(Icons.close, color: AppColors.white), onPressed: () => Navigator.pop(c)),
           ),
         ]),
       ),
@@ -171,7 +172,7 @@ class _PoiAddScreenState extends State<PoiAddScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F0E9),
+      backgroundColor: AppColors.scaffold,
       appBar: const AppHeader(screenName: 'Add Place of Interest'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -214,9 +215,9 @@ class _PoiAddScreenState extends State<PoiAddScreen> {
               child: ElevatedButton(
                 onPressed: handleAdd,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black87,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: AppColors.buttonBg,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
                 ),
                 child: const Text('Save Place', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../widgets/app_header.dart';
 import '../location_repository.dart';
@@ -16,9 +17,8 @@ class LocationMaintenanceScreen extends StatefulWidget {
 class _LocationMaintenanceScreenState extends State<LocationMaintenanceScreen> {
   @override
   Widget build(BuildContext context) {
-    const bg = Color(0xFFF5F3EE);
-    return const Scaffold(
-      backgroundColor: bg,
+    return Scaffold(
+      backgroundColor: AppColors.scaffold,
       appBar: AppHeader(screenName: 'Location Options'),
       body: _SingleGeneralTree(),
     );
@@ -66,12 +66,12 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
     hintText: hint,
     isDense: true,
     filled: true,
-    fillColor: Colors.white,
+    fillColor: AppColors.white,
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    hintStyle: const TextStyle(fontSize: 13, color: Colors.black54),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black54)),
+    hintStyle: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.button), borderSide: const BorderSide(color: AppColors.border)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.button), borderSide: const BorderSide(color: AppColors.border)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.button), borderSide: const BorderSide(color: AppColors.textSecondary)),
   );
 
   @override
@@ -79,10 +79,10 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
     return Column(
       children: [
         Container(
-          color: const Color(0xFFE8E0D5),
+          color: AppColors.banner,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(children: [
-            const Icon(Icons.info_outline, size: 14, color: Colors.black54),
+            const Icon(Icons.info_outline, size: 14, color: AppColors.textSecondary),
             const SizedBox(width: 6),
             Expanded(child: Text('${generals.length} Generals (shared) — Storage and Inventory specifics are separate', style: const TextStyle(fontSize: 11, color: Colors.black87, fontWeight: FontWeight.w600))),
           ]),
@@ -104,8 +104,8 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 3),
                 elevation: 0,
-                color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: Colors.black12, width: 0.5)),
+                color: AppColors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button), side: const BorderSide(color: AppColors.border, width: 0.5)),
                 child: Column(children: [
                   ListTile(
                     dense: true,
@@ -115,10 +115,10 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
                     title: isEditingGen ? TextField(controller: _editController, autofocus: true, onSubmitted: (v)=>_renameGeneral(genId, v), decoration: _fieldDec('General name'), style: const TextStyle(fontSize: 13)) : Text(genName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                     subtitle: Text('${stoSpecifics.length} Storage / ${invSpecifics.length} Inventory specifics - $itemCount items', style: const TextStyle(fontSize: 10, color: Colors.black87)),
                     trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      if(!isEditingGen) IconButton(icon: const Icon(Icons.edit_outlined, size: 14, color: Colors.black54), onPressed: ()=>setState(()=>{editingGeneralId=genId, _editController.text=genName}), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                      if(!isEditingGen) IconButton(icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.textSecondary), onPressed: ()=>setState(()=>{editingGeneralId=genId, _editController.text=genName}), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
                       if(isEditingGen) IconButton(icon: const Icon(Icons.check, size: 16, color: Colors.green), onPressed: ()=>_renameGeneral(genId, _editController.text), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                      if(isEditingGen) IconButton(icon: const Icon(Icons.close, size: 16, color: Colors.black54), onPressed: ()=>setState(()=>editingGeneralId=null), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                      IconButton(icon: Icon(Icons.delete_outline, size: 14, color: canDeleteGeneral?Colors.red:Colors.black26), onPressed: canDeleteGeneral?()=>_deleteGeneral(genId):null, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                      if(isEditingGen) IconButton(icon: const Icon(Icons.close, size: 16, color: AppColors.textSecondary), onPressed: ()=>setState(()=>editingGeneralId=null), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                      IconButton(icon: Icon(Icons.delete_outline, size: 14, color: canDeleteGeneral?Colors.red:AppColors.border), onPressed: canDeleteGeneral?()=>_deleteGeneral(genId):null, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
                     ]),
                   ),
                   if(isExp) ...[
@@ -128,7 +128,7 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(6)),
                       child: Row(children: [
-                        const Icon(Icons.inventory_2_outlined, size: 12, color: Colors.black54),
+                        const Icon(Icons.inventory_2_outlined, size: 12, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
                         Text('Storage Specifics (${stoSpecifics.length})', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87)),
                       ]),
@@ -143,9 +143,9 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
                         padding: const EdgeInsets.fromLTRB(24, 2, 8, 2),
                         child: Row(children: [
                           Expanded(child: isEditing ? TextField(controller: _editController, autofocus: true, onSubmitted: (v)=>_renameSpecific(specId, v, 'storage'), decoration: _fieldDec('Specific name'), style: const TextStyle(fontSize: 12)) : Text('• $specName ($count items)', style: const TextStyle(fontSize: 12))),
-                          if(!isEditing) IconButton(icon: const Icon(Icons.edit_outlined, size: 12, color: Colors.black54), onPressed: ()=>setState(()=>{editingSpecificId=specId, editingSpecificType='storage', _editController.text=specName}), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                          if(!isEditing) IconButton(icon: const Icon(Icons.edit_outlined, size: 12, color: AppColors.textSecondary), onPressed: ()=>setState(()=>{editingSpecificId=specId, editingSpecificType='storage', _editController.text=specName}), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
                           if(isEditing) IconButton(icon: const Icon(Icons.check, size: 14, color: Colors.green), onPressed: ()=>_renameSpecific(specId, _editController.text, 'storage'), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                          IconButton(icon: Icon(Icons.delete_outline, size: 12, color: canDelete?Colors.red:Colors.black26), onPressed: canDelete?()=>_deleteSpecific(specId, 'storage'):null, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                          IconButton(icon: Icon(Icons.delete_outline, size: 12, color: canDelete?Colors.red:AppColors.border), onPressed: canDelete?()=>_deleteSpecific(specId, 'storage'):null, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
                         ]),
                       );
                     }),
@@ -154,7 +154,7 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
                       child: Row(children: [
                         Expanded(child: TextField(controller: _newStorageSpecificControllers.putIfAbsent(genId, ()=>TextEditingController()), decoration: _fieldDec('New Storage Specific'), style: const TextStyle(fontSize: 12), onSubmitted: (v)=>_addSpecific(genId, v, 'storage'))),
                         const SizedBox(width: 6),
-                        ElevatedButton(onPressed: ()=>_addSpecific(genId, _newStorageSpecificControllers[genId]?.text??'', 'storage'), style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), minimumSize: const Size(0, 34), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), child: const Text('+ Add', style: TextStyle(fontSize: 12))),
+                        ElevatedButton(onPressed: ()=>_addSpecific(genId, _newStorageSpecificControllers[genId]?.text??'', 'storage'), style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), minimumSize: const Size(0, 34), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))), child: const Text('+ Add', style: TextStyle(fontSize: 12))),
                       ]),
                     ),
                     // Inventory specifics section
@@ -163,7 +163,7 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(color: const Color(0xFFF3E5F5), borderRadius: BorderRadius.circular(6)),
                       child: Row(children: [
-                        const Icon(Icons.chair_alt_outlined, size: 12, color: Colors.black54),
+                        const Icon(Icons.chair_alt_outlined, size: 12, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
                         Text('Inventory Specifics (${invSpecifics.length})', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87)),
                       ]),
@@ -178,9 +178,9 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
                         padding: const EdgeInsets.fromLTRB(24, 2, 8, 2),
                         child: Row(children: [
                           Expanded(child: isEditing ? TextField(controller: _editController, autofocus: true, onSubmitted: (v)=>_renameSpecific(specId, v, 'inventory'), decoration: _fieldDec('Specific name'), style: const TextStyle(fontSize: 12)) : Text('• $specName ($count items)', style: const TextStyle(fontSize: 12))),
-                          if(!isEditing) IconButton(icon: const Icon(Icons.edit_outlined, size: 12, color: Colors.black54), onPressed: ()=>setState(()=>{editingSpecificId=specId, editingSpecificType='inventory', _editController.text=specName}), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                          if(!isEditing) IconButton(icon: const Icon(Icons.edit_outlined, size: 12, color: AppColors.textSecondary), onPressed: ()=>setState(()=>{editingSpecificId=specId, editingSpecificType='inventory', _editController.text=specName}), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
                           if(isEditing) IconButton(icon: const Icon(Icons.check, size: 14, color: Colors.green), onPressed: ()=>_renameSpecific(specId, _editController.text, 'inventory'), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                          IconButton(icon: Icon(Icons.delete_outline, size: 12, color: canDelete?Colors.red:Colors.black26), onPressed: canDelete?()=>_deleteSpecific(specId, 'inventory'):null, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                          IconButton(icon: Icon(Icons.delete_outline, size: 12, color: canDelete?Colors.red:AppColors.border), onPressed: canDelete?()=>_deleteSpecific(specId, 'inventory'):null, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
                         ]),
                       );
                     }),
@@ -189,7 +189,7 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
                       child: Row(children: [
                         Expanded(child: TextField(controller: _newInventorySpecificControllers.putIfAbsent(genId, ()=>TextEditingController()), decoration: _fieldDec('New Inventory Specific'), style: const TextStyle(fontSize: 12), onSubmitted: (v)=>_addSpecific(genId, v, 'inventory'))),
                         const SizedBox(width: 6),
-                        ElevatedButton(onPressed: ()=>_addSpecific(genId, _newInventorySpecificControllers[genId]?.text??'', 'inventory'), style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), minimumSize: const Size(0, 34), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), child: const Text('+ Add', style: TextStyle(fontSize: 12))),
+                        ElevatedButton(onPressed: ()=>_addSpecific(genId, _newInventorySpecificControllers[genId]?.text??'', 'inventory'), style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), minimumSize: const Size(0, 34), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))), child: const Text('+ Add', style: TextStyle(fontSize: 12))),
                       ]),
                     ),
                   ],
@@ -199,13 +199,13 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
           ),
         ),
         if (!kIsWeb) Container(
-          color: const Color(0xFFF5F3EE),
+          color: AppColors.scaffold,
           padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
           child: SafeArea(
             child: Row(children: [
               Expanded(child: TextField(controller: _newGeneralController, decoration: _fieldDec('New General (shared)'), style: const TextStyle(fontSize: 13), onSubmitted: (v)=>_addGeneral(v))),
               const SizedBox(width: 8),
-              ElevatedButton(onPressed: ()=>_addGeneral(_newGeneralController.text), style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), minimumSize: const Size(0, 38), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), child: const Text('+ Add', style: TextStyle(fontSize: 13))),
+              ElevatedButton(onPressed: ()=>_addGeneral(_newGeneralController.text), style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), minimumSize: const Size(0, 38), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))), child: const Text('+ Add', style: TextStyle(fontSize: 13))),
             ]),
           ),
         ),

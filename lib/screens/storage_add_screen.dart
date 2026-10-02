@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../widgets/photo_details_section.dart';
 import '../widgets/app_header.dart';
 import '../location_repository.dart';
@@ -37,7 +38,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     showDialog(
       context: context,
       builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -51,7 +52,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(c),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
                   child: const Text('OK'),
                 ),
               ),
@@ -218,7 +219,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     await showDialog(
       context: context,
       builder: (c) => Dialog(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.buttonBg,
         insetPadding: const EdgeInsets.all(10),
         child: Stack(
           children: [
@@ -230,8 +231,8 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
               right: 8,
               child: Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.edit, color: Colors.white), tooltip: 'Replace', onPressed: () { Navigator.pop(c); openPhotoSheet(); }),
-                  IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(c)),
+                  IconButton(icon: Icon(Icons.edit, color: AppColors.white), tooltip: 'Replace', onPressed: () { Navigator.pop(c); openPhotoSheet(); }),
+                  IconButton(icon: Icon(Icons.close, color: AppColors.white), onPressed: () => Navigator.pop(c)),
                 ],
               ),
             ),
@@ -249,15 +250,15 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
 
   Widget _buildDistinctPlaceholder() {
     return Container(
-      color: Colors.white,
+      color: AppColors.white,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Opacity(opacity: 0.68, child: Image.asset('assets/icon/app_icon.png', width: 64, height: 64, fit: BoxFit.contain)),
             const SizedBox(height: 6),
-            const Text('No Photo', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 11)),
-            const Text('Tap to add', style: TextStyle(color: Colors.black54, fontSize: 10, fontWeight: FontWeight.w600)),
+            const Text('No Photo', style: TextStyle(color: AppColors.buttonBg, fontWeight: FontWeight.w800, fontSize: 11)),
+            Text('Tap to add', style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -274,13 +275,13 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
           openPhotoSheet();
         }
       },
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.button),
       child: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black38), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: AppColors.white, border: Border.all(color: AppColors.textDisabled), borderRadius: BorderRadius.circular(AppRadius.button)),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(AppRadius.button),
           child: hasPhoto
               ? Stack(
                   fit: StackFit.expand,
@@ -291,8 +292,8 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
                       bottom: 5,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(5)),
-                        child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.zoom_in, size: 11, color: Colors.white), SizedBox(width: 2), Text('View', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold))]),
+                        decoration: BoxDecoration(color: AppColors.textSecondary, borderRadius: BorderRadius.circular(5)),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.zoom_in, size: 11, color: AppColors.white), SizedBox(width: 2), Text('View', style: TextStyle(color: AppColors.white, fontSize: 9, fontWeight: FontWeight.bold))]),
                       ),
                     ),
                     Positioned(
@@ -302,8 +303,8 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
                         onTap: openPhotoSheet,
                         child: Container(
                           padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: Colors.black12)),
-                          child: const Icon(Icons.edit, size: 12, color: Colors.black54),
+                          decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: AppColors.border)),
+                          child: Icon(Icons.edit, size: 12, color: AppColors.textSecondary),
                         ),
                       ),
                     ),
@@ -318,24 +319,24 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
   Widget buildPhotoBox() {
     return InkWell(
       onTap: openPhotoSheet,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.button),
       child: Container(
         width: double.infinity,
         height: 110,
-        decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: AppColors.white, border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(AppRadius.button)),
         child: photoFile == null
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_a_photo_outlined, size: 32, color: Colors.black38),
+                  Icon(Icons.add_a_photo_outlined, size: 32, color: AppColors.textDisabled),
                   SizedBox(height: 6),
-                  Text('Add Photo (optional)', style: TextStyle(color: Colors.black38, fontWeight: FontWeight.w600)),
+                  Text('Add Photo (optional)', style: TextStyle(color: AppColors.textDisabled, fontWeight: FontWeight.w600)),
                   SizedBox(height: 2),
-                  Text('Tap to take or choose', style: TextStyle(color: Colors.black26, fontSize: 11)),
+                  Text('Tap to take or choose', style: TextStyle(color: AppColors.border, fontSize: 11)),
                 ],
               )
             : ClipRRect(
-                borderRadius: BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(AppRadius.button),
                 child: Image.file(photoFile!, width: double.infinity, height: 110, fit: BoxFit.cover),
               ),
       ),
@@ -345,7 +346,7 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3EE),
+      backgroundColor: AppColors.scaffold,
       appBar: const AppHeader(screenName: 'Add Storage'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -385,13 +386,13 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Expanded(child: Text('General / Specific does not reset so you can add multiple items, but you can change it when needed.', style: TextStyle(fontSize: 11, color: Colors.black87, fontWeight: FontWeight.w600, height: 1.3))),
+                const Expanded(child: Text('General / Specific does not reset so you can add multiple items, but you can change it when needed.', style: TextStyle(fontSize: 11, color: AppColors.buttonBg, fontWeight: FontWeight.w600, height: 1.3))),
                 const SizedBox(width: 12),
                 SizedBox(
                   height: 36,
                   child: ElevatedButton(
                     onPressed: handleAdd,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, padding: EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
                     child: const Text('+ Add Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ),
@@ -399,9 +400,9 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
             ),
             if (addedItemsLog.isNotEmpty) ...[
               const SizedBox(height: 18),
-              const Text('ADDED THIS SESSION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87)),
+              const Text('ADDED THIS SESSION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.buttonBg)),
               const SizedBox(height: 6),
-              ...addedItemsLog.map((l) => Padding(padding: const EdgeInsets.only(bottom: 3), child: Text('• $l', style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.black87)))),
+              ...addedItemsLog.map((l) => Padding(padding: const EdgeInsets.only(bottom: 3), child: Text('• $l', style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: AppColors.buttonBg)))),
             ],
           ],
         ),

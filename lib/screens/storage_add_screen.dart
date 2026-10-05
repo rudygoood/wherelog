@@ -1,8 +1,9 @@
+
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/photo_details_section.dart';
 import '../widgets/app_header.dart';
-import '../location_repository.dart';
+import '../wherelog_repository.dart';
 import '../widgets/notes_section.dart';
 import '../widgets/required_section.dart';
 import 'dart:io';
@@ -15,7 +16,6 @@ class StorageAddScreen extends StatefulWidget {
 }
 
 class _StorageAddScreenState extends State<StorageAddScreen> {
-  // RENAMED: tier1/tier2 -> general/specific (JSON stays v5: storageGenerals/storageSpecifics/specificId)
   final generalController = TextEditingController();
   final specificController = TextEditingController();
   final itemNameController = TextEditingController();
@@ -29,48 +29,14 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
   bool _photoDetailsExpanded = true;
   File? photoFile;
   final _picker = ImagePicker();
-  final _locationRepo = LocationRepository();
-
-  // Backward compat getters map to v5 repo methods
-
+  final _repo = WhereLogRepository();
 
   void showCenterNotice(String msg) {
-    showDialog(
-      context: context,
-      builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.check_circle, size: 48, color: Colors.green.shade600),
-              const SizedBox(height: 12),
-              Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(c),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
-                  child: const Text('OK'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    showDialog(context: context, builder: (c) => Dialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sheet)), child: Padding(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.check_circle, size: 48, color: Colors.green.shade600), const SizedBox(height: 12), Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center), const SizedBox(height: 16), SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(c), style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))), child: const Text('OK')))]))));
     if (msg.startsWith('Added:')) {
-      Future.delayed(const Duration(milliseconds: 1300), () {
-        if (mounted) {
-          try { if (Navigator.canPop(context)) Navigator.pop(context); } catch (_) {}
-        }
-      });
+      Future.delayed(const Duration(milliseconds: 1300), () { if (mounted) { try { if (Navigator.canPop(context)) Navigator.pop(context); } catch (_) {} } });
     }
   }
-
-
 
   String get fullLocationDisplay {
     final g = generalController.text.trim();
@@ -79,13 +45,10 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
     return g.isNotEmpty ? g : s;
   }
 
-  // legacy alias for old calls
-  String get concatenatedLocation => fullLocationDisplay;
-
   @override
   void initState() {
     super.initState();
-    _locationRepo.load().then((_) => setState(() {}));
+    _repo.load().then((_) => setState(() {}));
     generalController.addListener(() => setState(() {}));
     specificController.addListener(() => setState(() {}));
     generalFocus.addListener(() => setState(() {}));
@@ -94,319 +57,78 @@ class _StorageAddScreenState extends State<StorageAddScreen> {
 
   @override
   void dispose() {
-    generalFocus.dispose();
-    specificFocus.dispose();
-    generalController.dispose();
-    specificController.dispose();
-    itemNameController.dispose();
-    notesController.dispose();
-    qtyController.dispose();
-    valueController.dispose();
+    generalFocus.dispose(); specificFocus.dispose();
+    generalController.dispose(); specificController.dispose();
+    itemNameController.dispose(); notesController.dispose(); qtyController.dispose(); valueController.dispose();
     super.dispose();
   }
 
-
-
-  // keep old method names as aliases so no other file breaks
   Future<void> handleAdd() async {
-    if (itemNameController.text.trim().isEmpty) {
-      showCenterNotice('Enter Stored Item');
-      return;
+    if (itemNameController.text.trim().isEmpty) { showCenterNotice('Enter Stored Item'); return; }
+    if (generalController.text.trim().isEmpty) { showCenterNotice('Pick General'); return; }
+    final gName = generalController.text.trim();
+    final sName = specificController.text.trim();
+    final generalId = _repo.generalIdForName(gName);
+    if (generalId.isEmpty) { showCenterNotice('General not found'); return; }
+    String specificId = '';
+    if (sName.isNotEmpty) {
+      final spec = _repo.storageSpecifics.firstWhere((s) => s['generalId']==generalId && (s['name']??'')==sName, orElse: ()=>{});
+      specificId = spec['id']?.toString() ?? '';
+      if (specificId.isEmpty) {
+        await _repo.addStorageSpecific(generalId, sName);
+        final spec2 = _repo.storageSpecifics.firstWhere((s) => s['generalId']==generalId && (s['name']??'')==sName, orElse: ()=>{});
+        specificId = spec2['id']?.toString() ?? '';
+      }
+    } else {
+      final sentinel = _repo.storageSpecifics.firstWhere((s) => s['generalId']==generalId && (s['name']?.toString()??'').isEmpty, orElse: ()=>{});
+      specificId = sentinel['id']?.toString() ?? '';
     }
-    if (generalController.text.trim().isEmpty) {
-      showCenterNotice('Pick General');
-      return;
-    }
-    final loc = fullLocationDisplay.isEmpty ? generalController.text.trim() : fullLocationDisplay;
-    final hasPhoto = photoFile != null ? ' 📷' : '';
-    final addedName = itemNameController.text.trim();
+    if (specificId.isEmpty) { showCenterNotice('Specific not found'); return; }
     final qty = int.tryParse(qtyController.text.trim()) ?? 1;
     final valueText = valueController.text.trim();
     final valueAmt = double.tryParse(valueText.replaceAll('\$', '').trim());
-
-    // v5 ID resolution - JSON keys stay stable
-    final gName = generalController.text.trim();
-    final sName = specificController.text.trim();
-    String specificId = '';
-    String generalId = '';
-    try {
-      final gen = _locationRepo.generals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
-      generalId = gen['id']?.toString() ?? '';
-      if (sName.isNotEmpty) {
-        final spec = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
-        specificId = spec['id']?.toString() ?? '';
-      } else {
-        final sentinel = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').isEmpty, orElse: () => {});
-        specificId = sentinel['id']?.toString() ?? '';
-      }
-    } catch (_) {}
-
-    final nowIso = DateTime.now().toIso8601String();
     final item = {
-      'name': addedName,
-      // v5 stable JSON
+      'name': itemNameController.text.trim(),
       'generalId': generalId,
       'specificId': specificId,
-      // denormalized + legacy for backward compat - never change JSON structure again
-      'general': gName,
-      'specific': sName,
-      'tier1': gName,
-      'tier2': sName,
-      'place': gName,
-      'bin': sName,
-      'location': loc,
       'qty': qty,
-      'quantity': qty,
       'value': valueAmt,
       'valueAmount': valueText,
       'notes': notesController.text.trim(),
       'photo': photoFile?.path,
       'photoPath': photoFile?.path,
-      'createdAt': nowIso,
-      'modifyDate': nowIso, // NEW
-      'updatedAt': nowIso,
     };
-    await _locationRepo.addStorageItem(item);
-    setState(() {
-      addedItemsLog.add('$addedName x$qty @ $loc$hasPhoto');
-    });
+    await _repo.addStorageItem(item);
+    setState(() { addedItemsLog.add('${item['name']} x$qty @ $fullLocationDisplay${photoFile!=null?' 📷':''}'); });
     itemNameController.clear();
-    notesController.clear();
-    qtyController.text = '1';
-    valueController.clear();
-    setState(() => photoFile = null);
-    showCenterNotice('Added: $addedName x$qty @ $loc$hasPhoto');
-  }
-
-  Future<void> openNotesEditor() async {
-    final tempCtrl = TextEditingController(text: notesController.text);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Edit Notes'),
-        content: TextField(controller: tempCtrl, minLines: 4, maxLines: 8),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(c, tempCtrl.text), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (result != null) setState(() => notesController.text = result);
+    showCenterNotice('Added: ${item['name']}');
   }
 
   Future<void> openPhotoSheet() async {
-    final src = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (c) => SafeArea(
-        child: Wrap(children: [
-          ListTile(leading: const Icon(Icons.photo_camera), title: const Text('Take Photo'), onTap: () => Navigator.pop(c, ImageSource.camera)),
-          ListTile(leading: const Icon(Icons.photo_library), title: const Text('Choose from Gallery'), onTap: () => Navigator.pop(c, ImageSource.gallery)),
-          if (photoFile != null) ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text('Remove Photo'), onTap: () => Navigator.pop(c, null)),
-        ]),
-      ),
-    );
-    if (src == null && photoFile != null) {
-      setState(() => photoFile = null);
-      return;
-    }
-    if (src == null) return;
-    final XFile? img = await _picker.pickImage(source: src, imageQuality: 80, maxWidth: 1024);
-    if (img != null) setState(() => photoFile = File(img.path));
+    showModalBottomSheet(context: context, builder: (c) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+      ListTile(leading: Icon(Icons.camera_alt), title: Text('Take Photo'), onTap: () async { Navigator.pop(c); final f = await _picker.pickImage(source: ImageSource.camera); if (f!=null) setState(()=>photoFile=File(f.path)); }),
+      ListTile(leading: Icon(Icons.photo_library), title: Text('Choose from Gallery'), onTap: () async { Navigator.pop(c); final f = await _picker.pickImage(source: ImageSource.gallery); if (f!=null) setState(()=>photoFile=File(f.path)); }),
+      if (photoFile!=null) ListTile(leading: Icon(Icons.delete, color: Colors.red), title: Text('Remove Photo', style: TextStyle(color: Colors.red)), onTap: () { Navigator.pop(c); setState(()=>photoFile=null); }),
+    ])));
   }
-
-
-  Future<void> openFullPhotoViewer(File file) async {
-    await showDialog(
-      context: context,
-      builder: (c) => Dialog(
-        backgroundColor: AppColors.buttonBg,
-        insetPadding: const EdgeInsets.all(10),
-        child: Stack(
-          children: [
-            InteractiveViewer(
-              child: Center(child: Image.file(file, fit: BoxFit.contain)),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Row(
-                children: [
-                  IconButton(icon: Icon(Icons.edit, color: AppColors.white), tooltip: 'Replace', onPressed: () { Navigator.pop(c); openPhotoSheet(); }),
-                  IconButton(icon: Icon(Icons.close, color: AppColors.white), onPressed: () => Navigator.pop(c)),
-                ],
-              ),
-            ),
-            Positioned(
-              bottom: 12,
-              left: 0,
-              right: 0,
-              child: Center(child: Text('Pinch to zoom — tap ✕ to close', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600))),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDistinctPlaceholder() {
-    return Container(
-      color: AppColors.white,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Opacity(opacity: 0.68, child: Image.asset('assets/icon/app_icon.png', width: 64, height: 64, fit: BoxFit.contain)),
-            const SizedBox(height: 6),
-            const Text('No Photo', style: TextStyle(color: AppColors.buttonBg, fontWeight: FontWeight.w800, fontSize: 11)),
-            Text('Tap to add', style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildPhotoBoxSquare() {
-    final bool hasPhoto = photoFile != null;
-    return InkWell(
-      onTap: () {
-        if (hasPhoto) {
-          openFullPhotoViewer(photoFile!);
-        } else {
-          openPhotoSheet();
-        }
-      },
-      borderRadius: BorderRadius.circular(AppRadius.button),
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(color: AppColors.white, border: Border.all(color: AppColors.textDisabled), borderRadius: BorderRadius.circular(AppRadius.button)),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          child: hasPhoto
-              ? Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Center(child: Image.file(photoFile!, fit: BoxFit.contain)),
-                    Positioned(
-                      right: 5,
-                      bottom: 5,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(color: AppColors.textSecondary, borderRadius: BorderRadius.circular(5)),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.zoom_in, size: 11, color: AppColors.white), SizedBox(width: 2), Text('View', style: TextStyle(color: AppColors.white, fontSize: 9, fontWeight: FontWeight.bold))]),
-                      ),
-                    ),
-                    Positioned(
-                      right: 5,
-                      top: 5,
-                      child: InkWell(
-                        onTap: openPhotoSheet,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(5), border: Border.all(color: AppColors.border)),
-                          child: Icon(Icons.edit, size: 12, color: AppColors.textSecondary),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : _buildDistinctPlaceholder(),
-        ),
-      ),
-    );
-  }
-
-  Widget buildPhotoBox() {
-    return InkWell(
-      onTap: openPhotoSheet,
-      borderRadius: BorderRadius.circular(AppRadius.button),
-      child: Container(
-        width: double.infinity,
-        height: 110,
-        decoration: BoxDecoration(color: AppColors.white, border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(AppRadius.button)),
-        child: photoFile == null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_a_photo_outlined, size: 32, color: AppColors.textDisabled),
-                  SizedBox(height: 6),
-                  Text('Add Photo (optional)', style: TextStyle(color: AppColors.textDisabled, fontWeight: FontWeight.w600)),
-                  SizedBox(height: 2),
-                  Text('Tap to take or choose', style: TextStyle(color: AppColors.border, fontSize: 11)),
-                ],
-              )
-            : ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.button),
-                child: Image.file(photoFile!, width: double.infinity, height: 110, fit: BoxFit.cover),
-              ),
-      ),
-    );
-  }
+  void openFullPhotoViewer(File f) { showDialog(context: context, builder: (c)=>Dialog(child: Image.file(f))); }
+  Widget _buildDistinctPlaceholder() => Center(child: Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.textDisabled));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold,
       appBar: const AppHeader(screenName: 'Add Storage'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RequiredSection(
-              source: RequiredSectionSource.storage,
-              generalController: generalController,
-              specificController: specificController,
-              itemNameController: itemNameController,
-              generalFocus: generalFocus,
-              specificFocus: specificFocus,
-              locationRepo: _locationRepo,
-              itemHint: 'Stored Item',
-            ),
-            const SizedBox(height: 14),
-            PhotoDetailsSection(
-              isExpanded: _photoDetailsExpanded,
-              onToggle: () => setState(() => _photoDetailsExpanded = !_photoDetailsExpanded),
-              variant: PhotoDetailsVariant.storage,
-              storageKey: 'photoDetailsExpanded_storage_add',
-              photoFile: photoFile,
-              onPhotoAdd: openPhotoSheet,
-              onPhotoView: () => openFullPhotoViewer(photoFile!),
-              onPhotoEdit: openPhotoSheet,
-              valueController: valueController,
-              qtyController: qtyController,
-            ),
-            const SizedBox(height: 14),
-            NotesSection(
-              storageKey: 'notesExpanded_storage_add',
-              controller: notesController,
-              isExpanded: _notesExpanded,
-              onToggle: () => setState(() => _notesExpanded = !_notesExpanded),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Expanded(child: Text('General / Specific does not reset so you can add multiple items, but you can change it when needed.', style: TextStyle(fontSize: 11, color: AppColors.buttonBg, fontWeight: FontWeight.w600, height: 1.3))),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: handleAdd,
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, padding: EdgeInsets.symmetric(horizontal: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
-                    child: const Text('+ Add Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  ),
-                ),
-              ],
-            ),
-            if (addedItemsLog.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              const Text('ADDED THIS SESSION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.buttonBg)),
-              const SizedBox(height: 6),
-              ...addedItemsLog.map((l) => Padding(padding: const EdgeInsets.only(bottom: 3), child: Text('• $l', style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: AppColors.buttonBg)))),
-            ],
-          ],
-        ),
-      ),
+      body: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(16,8,16,16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        RequiredSection(source: RequiredSectionSource.storage, generalController: generalController, specificController: specificController, itemNameController: itemNameController, generalFocus: generalFocus, specificFocus: specificFocus, repo: _repo, itemHint: 'Stored Item'),
+        const SizedBox(height:14),
+        PhotoDetailsSection(isExpanded: _photoDetailsExpanded, onToggle: ()=>setState(()=>_photoDetailsExpanded=!_photoDetailsExpanded), variant: PhotoDetailsVariant.storage, storageKey: 'photoDetailsExpanded_storage_add', photoFile: photoFile, onPhotoAdd: openPhotoSheet, onPhotoView: ()=>photoFile!=null?openFullPhotoViewer(photoFile!):null, onPhotoEdit: openPhotoSheet, valueController: valueController, qtyController: qtyController),
+        const SizedBox(height:14),
+        NotesSection(storageKey: 'notesExpanded_storage_add', controller: notesController, isExpanded: _notesExpanded, onToggle: ()=>setState(()=>_notesExpanded=!_notesExpanded)),
+        const SizedBox(height:16),
+        Row(children: [const Expanded(child: Text('General / Specific does not reset so you can add multiple items, but you can change it when needed.', style: TextStyle(fontSize: 11, color: AppColors.buttonBg, fontWeight: FontWeight.w600, height: 1.3))), const SizedBox(width:12), SizedBox(height:36, child: ElevatedButton(onPressed: handleAdd, style: ElevatedButton.styleFrom(backgroundColor: AppColors.buttonBg, foregroundColor: AppColors.white, padding: EdgeInsets.symmetric(horizontal:16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))), child: const Text('+ Add Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))))]),
+        if (addedItemsLog.isNotEmpty) ...[const SizedBox(height:18), const Text('ADDED THIS SESSION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.buttonBg)), const SizedBox(height:6), ...addedItemsLog.map((l)=>Padding(padding: const EdgeInsets.only(bottom:3), child: Text('• $l', style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: AppColors.buttonBg))))],
+      ])),
     );
   }
 }

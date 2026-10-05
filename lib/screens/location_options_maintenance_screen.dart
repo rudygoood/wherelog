@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../widgets/app_header.dart';
-import '../location_repository.dart';
+import '../wherelog_repository.dart';
 
-/// Location Options v6 - SINGLE GENERALS
-/// Before: 2 tabs with duplicate generals (Garage in Storage + Garage in Inventory = 2 entries)
-/// Now: Single list of 10 unique generals, each shows storage specifics + inventory specifics counts
+/// Location Options v9 - SINGLE GENERALS CLEAN
+/// Uses WhereLogRepository v9 only: generalId/specificId, no tier synonyms
 
 class LocationMaintenanceScreen extends StatefulWidget {
   const LocationMaintenanceScreen({super.key});
@@ -32,7 +31,7 @@ class _SingleGeneralTree extends StatefulWidget {
 }
 
 class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
-  final LocationRepository _repo = LocationRepository();
+  final WhereLogRepository _repo = WhereLogRepository();
   Set<String> expanded = {};
   String? editingGeneralId;
   String? editingSpecificId;
@@ -215,20 +214,19 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
 
   Future<void> _addGeneral(String name) async {
     final t=name.trim(); if(t.isEmpty) return;
-    if(_repo.isDuplicateTier1(t)){_snack('General "$t" already exists'); return;}
-    await _repo.addTier1(t);
+    if(_repo.isDuplicateGeneral(t)){_snack('General "$t" already exists'); return;}
+    await _repo.addGeneral(t);
     _newGeneralController.clear(); setState((){});
   }
   Future<void> _addSpecific(String genId, String name, String type) async {
     final t=name.trim(); if(t.isEmpty) return;
-    final gen=generals.firstWhere((g)=>g['id']==genId, orElse: ()=>{}); final genName=gen['name']?.toString()??'';
     if(type=='storage'){
-      if(_repo.isDuplicateStorageTier2(genName, t)){_snack('Storage Specific "$t" already exists in $genName'); return;}
-      await _repo.addStorageTier2(genName, t);
+      if(_repo.isDuplicateStorageSpecific(genId, t)){_snack('Storage Specific "$t" already exists'); return;}
+      await _repo.addStorageSpecific(genId, t);
       _newStorageSpecificControllers[genId]?.clear();
     } else {
-      if(_repo.isDuplicateInventoryTier2(genName, t)){_snack('Inventory Specific "$t" already exists in $genName'); return;}
-      await _repo.addInventoryTier2(genName, t);
+      if(_repo.isDuplicateInventorySpecific(genId, t)){_snack('Inventory Specific "$t" already exists'); return;}
+      await _repo.addInventorySpecific(genId, t);
       _newInventorySpecificControllers[genId]?.clear();
     }
     setState(()=>expanded.add(genId));
@@ -237,7 +235,7 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
     final t=newName.trim(); if(t.isEmpty){setState(()=>editingGeneralId=null); return;}
     final idx=generals.indexWhere((g)=>g['id']==genId); if(idx<0) return;
     final oldName=generals[idx]['name'].toString(); if(t.toLowerCase()==oldName.toLowerCase()){setState(()=>editingGeneralId=null); return;}
-    if(_repo.isDuplicateTier1(t)){_snack('General "$t" already exists'); return;}
+    if(_repo.isDuplicateGeneral(t)){_snack('General "$t" already exists'); return;}
     generals[idx]['name']=t; await _repo.save(); setState(()=>editingGeneralId=null);
   }
   Future<void> _renameSpecific(String specId, String newName, String type) async {
@@ -245,8 +243,8 @@ class _SingleGeneralTreeState extends State<_SingleGeneralTree> {
     final list = type=='storage' ? storageSpecifics : inventorySpecifics;
     final idx=list.indexWhere((s)=>s['id']==specId); if(idx<0) return;
     final old=list[idx]['name'].toString(); if(t.toLowerCase()==old.toLowerCase()){setState(()=>editingSpecificId=null); return;}
-    final genId=list[idx]['generalId'].toString(); final gen=generals.firstWhere((g)=>g['id']==genId, orElse: ()=>{}); final genName=gen['name']?.toString()??'';
-    if(type=='storage' && _repo.isDuplicateStorageTier2(genName, t) || type=='inventory' && _repo.isDuplicateInventoryTier2(genName, t)){_snack('Specific "$t" already exists in $genName'); return;}
+    final genId=list[idx]['generalId'].toString();
+    if(type=='storage' && _repo.isDuplicateStorageSpecific(genId, t) || type=='inventory' && _repo.isDuplicateInventorySpecific(genId, t)){_snack('Specific "$t" already exists'); return;}
     list[idx]['name']=t; await _repo.save(); setState(()=>editingSpecificId=null);
   }
   Future<void> _deleteGeneral(String genId) async {

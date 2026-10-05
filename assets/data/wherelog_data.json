@@ -1,271 +1,427 @@
 {
-  "storageGenerals": [
+  "generals": [
     {
-      "id": "stogen_001",
+      "id": "gen_001",
       "name": "Garage"
     },
     {
-      "id": "stogen_002",
+      "id": "gen_002",
       "name": "Kitchen"
     },
     {
-      "id": "stogen_003",
+      "id": "gen_003",
       "name": "Basement"
     },
     {
-      "id": "stogen_004",
+      "id": "gen_004",
       "name": "Attic"
     },
     {
-      "id": "stogen_005",
+      "id": "gen_005",
       "name": "Shed"
     },
     {
-      "id": "stogen_006",
+      "id": "gen_006",
       "name": "Laundry Room"
     },
     {
-      "id": "stogen_007",
+      "id": "gen_007",
       "name": "Out Building #1"
     },
     {
-      "id": "stogen_008",
+      "id": "gen_008",
       "name": "Out Building #2"
     },
     {
-      "id": "stogen_009",
+      "id": "gen_009",
       "name": "Bathroom"
+    },
+    {
+      "id": "gen_010",
+      "name": "Living Room"
     }
   ],
   "storageSpecifics": [
     {
       "id": "stospec_001",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "name": ""
     },
     {
       "id": "stospec_002",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "name": "Top Shelf"
     },
     {
       "id": "stospec_003",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "name": "Yellow Box"
     },
     {
       "id": "stospec_004",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "name": "Gray Toolbox"
     },
     {
       "id": "stospec_005",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "name": "Bin 1"
     },
     {
       "id": "stospec_006",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "name": "Box Labeled My Stuff"
     },
     {
       "id": "stospec_007",
-      "generalId": "stogen_002",
+      "generalId": "gen_002",
       "name": ""
     },
     {
       "id": "stospec_008",
-      "generalId": "stogen_002",
+      "generalId": "gen_002",
       "name": "Tall Cabinet"
     },
     {
       "id": "stospec_009",
-      "generalId": "stogen_002",
+      "generalId": "gen_002",
       "name": "Pantry Shelf"
     },
     {
       "id": "stospec_010",
-      "generalId": "stogen_002",
+      "generalId": "gen_002",
       "name": "Bin 1"
     },
     {
       "id": "stospec_011",
-      "generalId": "stogen_003",
+      "generalId": "gen_003",
       "name": ""
     },
     {
       "id": "stospec_012",
-      "generalId": "stogen_003",
+      "generalId": "gen_003",
       "name": "Middle Shelf"
     },
     {
       "id": "stospec_013",
-      "generalId": "stogen_003",
+      "generalId": "gen_003",
       "name": "Bin 1"
     },
     {
       "id": "stospec_014",
-      "generalId": "stogen_004",
+      "generalId": "gen_004",
       "name": ""
     },
     {
       "id": "stospec_015",
-      "generalId": "stogen_005",
+      "generalId": "gen_005",
       "name": ""
     },
     {
       "id": "stospec_016",
-      "generalId": "stogen_005",
+      "generalId": "gen_005",
       "name": "Bin 1"
     },
     {
       "id": "stospec_017",
-      "generalId": "stogen_005",
+      "generalId": "gen_005",
       "name": "Middle Shelf"
     },
     {
       "id": "stospec_018",
-      "generalId": "stogen_006",
+      "generalId": "gen_006",
       "name": ""
     },
     {
       "id": "stospec_019",
-      "generalId": "stogen_006",
+      "generalId": "gen_006",
       "name": "North Cabinet"
     },
     {
       "id": "stospec_020",
-      "generalId": "stogen_007",
+      "generalId": "gen_007",
       "name": ""
     },
     {
       "id": "stospec_021",
-      "generalId": "stogen_007",
+      "generalId": "gen_007",
       "name": "Old File Cabinet"
     },
     {
       "id": "stospec_022",
-      "generalId": "stogen_008",
+      "generalId": "gen_008",
       "name": ""
     },
     {
       "id": "stospec_023",
-      "generalId": "stogen_008",
+      "generalId": "gen_008",
       "name": "Drawer 12"
     },
     {
       "id": "stospec_024",
-      "generalId": "stogen_008",
+      "generalId": "gen_008",
       "name": "Drawer 11"
     },
     {
       "id": "stospec_025",
-      "generalId": "stogen_009",
+      "generalId": "gen_009",
       "name": ""
     },
     {
       "id": "stospec_026",
-      "generalId": "stogen_009",
+      "generalId": "gen_009",
       "name": "Sink cabinet"
     },
     {
       "id": "stospec_027",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "name": "Refrigerator top"
     },
     {
       "id": "stospec_028",
-      "generalId": "stogen_004",
+      "generalId": "gen_004",
       "name": "Under Green Tarp"
+    },
+    {
+      "id": "stospec_029",
+      "generalId": "gen_004",
+      "name": "Cardboard Box (Christmas)"
+    }
+  ],
+  "inventorySpecifics": [
+    {
+      "id": "invspec_001",
+      "generalId": "gen_001",
+      "name": ""
+    },
+    {
+      "id": "invspec_002",
+      "generalId": "gen_001",
+      "name": "Top Shelf"
+    },
+    {
+      "id": "invspec_003",
+      "generalId": "gen_001",
+      "name": "Yellow Box"
+    },
+    {
+      "id": "invspec_004",
+      "generalId": "gen_001",
+      "name": "Gray Toolbox"
+    },
+    {
+      "id": "invspec_005",
+      "generalId": "gen_001",
+      "name": "Bin 1"
+    },
+    {
+      "id": "invspec_006",
+      "generalId": "gen_001",
+      "name": "Box Labeled My Stuff"
+    },
+    {
+      "id": "invspec_007",
+      "generalId": "gen_002",
+      "name": ""
+    },
+    {
+      "id": "invspec_008",
+      "generalId": "gen_002",
+      "name": "Tall Cabinet"
+    },
+    {
+      "id": "invspec_009",
+      "generalId": "gen_002",
+      "name": "Pantry Shelf"
+    },
+    {
+      "id": "invspec_010",
+      "generalId": "gen_002",
+      "name": "Bin 1"
+    },
+    {
+      "id": "invspec_011",
+      "generalId": "gen_003",
+      "name": ""
+    },
+    {
+      "id": "invspec_012",
+      "generalId": "gen_003",
+      "name": "Middle Shelf"
+    },
+    {
+      "id": "invspec_013",
+      "generalId": "gen_003",
+      "name": "Bin 1"
+    },
+    {
+      "id": "invspec_014",
+      "generalId": "gen_004",
+      "name": ""
+    },
+    {
+      "id": "invspec_015",
+      "generalId": "gen_005",
+      "name": ""
+    },
+    {
+      "id": "invspec_016",
+      "generalId": "gen_005",
+      "name": "Bin 1"
+    },
+    {
+      "id": "invspec_017",
+      "generalId": "gen_005",
+      "name": "Middle Shelf"
+    },
+    {
+      "id": "invspec_018",
+      "generalId": "gen_006",
+      "name": ""
+    },
+    {
+      "id": "invspec_019",
+      "generalId": "gen_006",
+      "name": "North Cabinet"
+    },
+    {
+      "id": "invspec_020",
+      "generalId": "gen_007",
+      "name": ""
+    },
+    {
+      "id": "invspec_021",
+      "generalId": "gen_007",
+      "name": "Old File Cabinet"
+    },
+    {
+      "id": "invspec_022",
+      "generalId": "gen_005",
+      "name": "Bin 2"
+    },
+    {
+      "id": "invspec_023",
+      "generalId": "gen_010",
+      "name": ""
+    },
+    {
+      "id": "invspec_024",
+      "generalId": "gen_003",
+      "name": "Top Shelf"
     }
   ],
   "storageItems": [
     {
       "id": "stoitem_001",
       "name": "A test item #1",
+      "generalId": "gen_003",
       "specificId": "stospec_012",
+      "qty": 1,
+      "value": null,
+      "valueAmount": "",
       "notes": "A note.",
-      "image": null,
-      "createdAt": "2026-09-06T20:03:38.125541"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-06T20:03:38.125541",
+      "modifyDate": "2026-09-06T20:03:38.125541",
+      "updatedAt": "2026-09-06T20:03:38.125541"
     },
     {
       "id": "stoitem_002",
       "name": "Sand Paper Disks",
-      "generalId": "stogen_001",
+      "generalId": "gen_001",
       "specificId": "stospec_003",
-      "general": "Garage",
-      "specific": "Yellow Box",
-      "tier1": "Garage",
-      "tier2": "Yellow Box",
-      "place": "Garage",
-      "bin": "Yellow Box",
-      "location": "Garage / Yellow Box",
       "qty": 1,
-      "quantity": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "A test note",
+      "photo": "C:\\Users\\rudy\\Documents/WhereLog/photos/briefc_ppc_kybd.jpg",
+      "photoPath": "C:\\Users\\rudy\\Documents/WhereLog/photos/briefc_ppc_kybd.jpg",
+      "createdAt": "2026-09-07T07:36:05.010989",
+      "modifyDate": "2026-09-26T11:38:24.430439",
+      "updatedAt": "2026-09-26T11:38:24.430439"
+    },
+    {
+      "id": "stoitem_003",
+      "name": "Yellow Tractor Paint",
+      "generalId": "gen_003",
+      "specificId": "stospec_012",
+      "qty": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "Yellow tractor paint to use with on our yellow tractor.",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T13:01:31.743718",
+      "modifyDate": "2026-09-07T13:01:31.743718",
+      "updatedAt": "2026-09-07T13:01:31.743718"
+    },
+    {
+      "id": "stoitem_004",
+      "name": "Some Item for the My Stuff box",
+      "generalId": "gen_001",
+      "specificId": "stospec_006",
+      "qty": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "A small note.",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T18:40:56.493943",
+      "modifyDate": "2026-09-07T18:40:56.493943",
+      "updatedAt": "2026-09-07T18:40:56.493943"
+    },
+    {
+      "id": "stoitem_005",
+      "name": "Vege Food",
+      "generalId": "gen_006",
+      "specificId": "stospec_019",
+      "qty": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "This is an additional detail.",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T20:54:55.672319",
+      "modifyDate": "2026-09-07T20:54:55.672319",
+      "updatedAt": "2026-09-07T20:54:55.672319"
+    },
+    {
+      "id": "stoitem_006",
+      "name": "Life Jackets",
+      "generalId": "gen_007",
+      "specificId": "stospec_021",
+      "qty": 1,
       "value": null,
       "valueAmount": "",
       "notes": "",
       "photo": null,
       "photoPath": null,
-      "createdAt": "2026-09-07T07:36:05.010989",
-      "modifyDate": "2026-09-18T22:06:44.717536",
-      "updatedAt": "2026-09-18T22:06:44.717536",
-      "image": null
-    },
-    {
-      "id": "stoitem_003",
-      "name": "Yellow Tractor Paint",
-      "specificId": "stospec_012",
-      "notes": "Yellow tractor paint to use with on our yellow tractor.",
-      "image": null,
-      "createdAt": "2026-09-07T13:01:31.743718"
-    },
-    {
-      "id": "stoitem_004",
-      "name": "Some Item for the My Stuff box",
-      "specificId": "stospec_006",
-      "notes": "A small note.",
-      "image": null,
-      "createdAt": "2026-09-07T18:40:56.493943"
-    },
-    {
-      "id": "stoitem_005",
-      "name": "Vege Food",
-      "specificId": "stospec_019",
-      "notes": "This is an additional detail.",
-      "image": null,
-      "createdAt": "2026-09-07T20:54:55.672319"
-    },
-    {
-      "id": "stoitem_006",
-      "name": "Life Jackets",
-      "specificId": "stospec_021",
-      "notes": "",
-      "image": null,
-      "createdAt": "2026-09-07T21:11:48.278816"
+      "createdAt": "2026-09-07T21:11:48.278816",
+      "modifyDate": "2026-09-07T21:11:48.278816",
+      "updatedAt": "2026-09-07T21:11:48.278816"
     },
     {
       "id": "stoitem_007",
       "name": "Another item",
+      "generalId": "gen_001",
       "specificId": "stospec_005",
+      "qty": 1,
+      "value": null,
+      "valueAmount": "",
       "notes": "",
-      "image": null,
-      "createdAt": "2026-09-08T00:21:00.354917"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-08T00:21:00.354917",
+      "modifyDate": "2026-09-08T00:21:00.354917",
+      "updatedAt": "2026-09-08T00:21:00.354917"
     },
     {
       "id": "stoitem_008",
       "name": "Copper Plumbing Fittings",
-      "generalId": "stogen_008",
+      "generalId": "gen_008",
       "specificId": "stospec_024",
-      "general": "Out Building #2",
-      "specific": "Drawer 11",
-      "tier1": "Out Building #2",
-      "tier2": "Drawer 11",
-      "place": "Out Building #2",
-      "bin": "Drawer 11",
-      "location": "Out Building #2 / Drawer 11",
       "qty": 1,
-      "quantity": 1,
       "value": null,
       "valueAmount": "",
       "notes": "",
@@ -276,18 +432,11 @@
       "updatedAt": "2026-09-14T16:55:50.595823"
     },
     {
+      "id": "stoitem_009",
       "name": "Used car parts",
-      "generalId": "stogen_003",
+      "generalId": "gen_003",
       "specificId": "stospec_012",
-      "general": "Basement",
-      "specific": "Middle Shelf",
-      "tier1": "Basement",
-      "tier2": "Middle Shelf",
-      "place": "Basement",
-      "bin": "Middle Shelf",
-      "location": "Basement / Middle Shelf",
       "qty": 1,
-      "quantity": 1,
       "value": null,
       "valueAmount": "",
       "notes": "",
@@ -295,22 +444,14 @@
       "photoPath": null,
       "createdAt": "2026-09-14T18:26:02.397585",
       "modifyDate": "2026-09-14T18:26:02.399718",
-      "updatedAt": "2026-09-14T18:26:02.399718",
-      "id": "stoitem_009"
+      "updatedAt": "2026-09-14T18:26:02.399718"
     },
     {
+      "id": "stoitem_010",
       "name": "Hair dryer",
-      "generalId": "stogen_009",
+      "generalId": "gen_009",
       "specificId": "stospec_026",
-      "general": "Bathroom",
-      "specific": "Sink cabinet",
-      "tier1": "Bathroom",
-      "tier2": "Sink cabinet",
-      "place": "Bathroom",
-      "bin": "Sink cabinet",
-      "location": "Bathroom / Sink cabinet",
       "qty": 1,
-      "quantity": 1,
       "value": null,
       "valueAmount": "",
       "notes": "",
@@ -321,228 +462,123 @@
       "updatedAt": "2026-09-18T12:43:45.227218"
     },
     {
+      "id": "stoitem_011",
       "name": "Candy bars",
-      "generalId": "stogen_002",
+      "generalId": "gen_002",
       "specificId": "stospec_009",
-      "general": "Kitchen",
-      "specific": "Pantry Shelf",
-      "tier1": "Kitchen",
-      "tier2": "Pantry Shelf",
-      "place": "Kitchen",
-      "bin": "Pantry Shelf",
-      "location": "Kitchen / Pantry Shelf",
       "qty": 1,
-      "quantity": 1,
       "value": 33.0,
       "valueAmount": "33",
       "notes": "A detail added by me",
-      "photo": "C:\\Users\\rudy\\OneDrive\\Photos\\conversation.jpg",
-      "photoPath": "C:\\Users\\rudy\\OneDrive\\Photos\\conversation.jpg",
+      "photo": "C:\\Users\\rudy\\Documents/WhereLog/photos/conversation.jpg",
+      "photoPath": "C:\\Users\\rudy\\Documents/WhereLog/photos/conversation.jpg",
       "createdAt": "2026-09-18T17:48:57.307386",
       "modifyDate": "2026-09-18T17:48:57.307386",
       "updatedAt": "2026-09-18T17:48:57.307386"
-    }
-  ],
-  "inventoryGenerals": [
-    {
-      "id": "invgen_001",
-      "name": "Garage"
     },
     {
-      "id": "invgen_002",
-      "name": "Kitchen"
+      "id": "stoitem_012",
+      "name": "Window candles (ivory)",
+      "generalId": "gen_004",
+      "specificId": "stospec_029",
+      "qty": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-25T17:38:07.742",
+      "modifyDate": "2026-09-25T17:38:51.391627",
+      "updatedAt": "2026-09-25T17:38:51.391627"
     },
     {
-      "id": "invgen_003",
-      "name": "Basement"
-    },
-    {
-      "id": "invgen_004",
-      "name": "Attic"
-    },
-    {
-      "id": "invgen_005",
-      "name": "Shed"
-    },
-    {
-      "id": "invgen_006",
-      "name": "Laundry Room"
-    },
-    {
-      "id": "invgen_007",
-      "name": "Out Building #1"
-    },
-    {
-      "id": "invgen_008",
-      "name": "Living Room"
-    }
-  ],
-  "inventorySpecifics": [
-    {
-      "id": "invspec_001",
-      "generalId": "invgen_001",
-      "name": ""
-    },
-    {
-      "id": "invspec_002",
-      "generalId": "invgen_001",
-      "name": "Top Shelf"
-    },
-    {
-      "id": "invspec_003",
-      "generalId": "invgen_001",
-      "name": "Yellow Box"
-    },
-    {
-      "id": "invspec_004",
-      "generalId": "invgen_001",
-      "name": "Gray Toolbox"
-    },
-    {
-      "id": "invspec_005",
-      "generalId": "invgen_001",
-      "name": "Bin 1"
-    },
-    {
-      "id": "invspec_006",
-      "generalId": "invgen_001",
-      "name": "Box Labeled My Stuff"
-    },
-    {
-      "id": "invspec_007",
-      "generalId": "invgen_002",
-      "name": ""
-    },
-    {
-      "id": "invspec_008",
-      "generalId": "invgen_002",
-      "name": "Tall Cabinet"
-    },
-    {
-      "id": "invspec_009",
-      "generalId": "invgen_002",
-      "name": "Pantry Shelf"
-    },
-    {
-      "id": "invspec_010",
-      "generalId": "invgen_002",
-      "name": "Bin 1"
-    },
-    {
-      "id": "invspec_011",
-      "generalId": "invgen_003",
-      "name": ""
-    },
-    {
-      "id": "invspec_012",
-      "generalId": "invgen_003",
-      "name": "Middle Shelf"
-    },
-    {
-      "id": "invspec_013",
-      "generalId": "invgen_003",
-      "name": "Bin 1"
-    },
-    {
-      "id": "invspec_014",
-      "generalId": "invgen_004",
-      "name": ""
-    },
-    {
-      "id": "invspec_015",
-      "generalId": "invgen_005",
-      "name": ""
-    },
-    {
-      "id": "invspec_016",
-      "generalId": "invgen_005",
-      "name": "Bin 1"
-    },
-    {
-      "id": "invspec_017",
-      "generalId": "invgen_005",
-      "name": "Middle Shelf"
-    },
-    {
-      "id": "invspec_018",
-      "generalId": "invgen_006",
-      "name": ""
-    },
-    {
-      "id": "invspec_019",
-      "generalId": "invgen_006",
-      "name": "North Cabinet"
-    },
-    {
-      "id": "invspec_020",
-      "generalId": "invgen_007",
-      "name": ""
-    },
-    {
-      "id": "invspec_021",
-      "generalId": "invgen_007",
-      "name": "Old File Cabinet"
-    },
-    {
-      "id": "invspec_022",
-      "generalId": "invgen_005",
-      "name": "Bin 2"
-    },
-    {
-      "id": "invspec_023",
-      "generalId": "invgen_008",
-      "name": ""
+      "id": "sto_1791157772958",
+      "name": "V9 test item",
+      "generalId": "gen_009",
+      "specificId": "stospec_026",
+      "qty": 1,
+      "value": null,
+      "valueAmount": "",
+      "notes": "",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-10-04T19:49:32.958767",
+      "modifyDate": "2026-10-04T19:49:32.960060",
+      "updatedAt": "2026-10-04T19:49:32.960060"
     }
   ],
   "inventoryItems": [
     {
       "id": "invitem_001",
-      "name": "A test item #1",
-      "specificId": "invspec_012",
+      "name": "Fuzzy ugly stuff",
+      "generalId": "gen_003",
+      "specificId": "invspec_024",
+      "serial_number": "",
+      "acquisition_date": null,
+      "value": null,
+      "valueAmount": "",
       "notes": "A note.",
-      "image": null,
-      "createdAt": "2026-09-06T20:03:38.125541"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-06T20:03:38.125541",
+      "modifyDate": "2026-09-25T17:40:01.630036",
+      "updatedAt": "2026-09-25T17:40:01.630036"
     },
     {
       "id": "invitem_002",
       "name": "Sand Paper",
+      "generalId": "gen_001",
       "specificId": "invspec_003",
+      "serial_number": "",
+      "acquisition_date": null,
+      "value": null,
+      "valueAmount": "",
       "notes": "",
-      "image": null,
-      "createdAt": "2026-09-07T07:36:05.010989"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T07:36:05.010989",
+      "modifyDate": "2026-09-07T07:36:05.010989",
+      "updatedAt": "2026-09-07T07:36:05.010989"
     },
     {
       "id": "invitem_003",
       "name": "Yellow Tractor Paint",
+      "generalId": "gen_003",
       "specificId": "invspec_012",
+      "serial_number": "",
+      "acquisition_date": null,
+      "value": null,
+      "valueAmount": "",
       "notes": "Yellow tractor paint to use with on our yellow tractor.",
-      "image": null,
-      "createdAt": "2026-09-07T13:01:31.743718"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T13:01:31.743718",
+      "modifyDate": "2026-09-07T13:01:31.743718",
+      "updatedAt": "2026-09-07T13:01:31.743718"
     },
     {
       "id": "invitem_004",
       "name": "Some Item for the My Stuff box",
+      "generalId": "gen_001",
       "specificId": "invspec_006",
+      "serial_number": "",
+      "acquisition_date": null,
+      "value": null,
+      "valueAmount": "",
       "notes": "A small note.",
-      "image": null,
-      "createdAt": "2026-09-07T18:40:56.493943"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T18:40:56.493943",
+      "modifyDate": "2026-09-07T18:40:56.493943",
+      "updatedAt": "2026-09-07T18:40:56.493943"
     },
     {
       "id": "invitem_005",
       "name": "Vegetarian Food",
-      "generalId": "invgen_006",
+      "generalId": "gen_006",
       "specificId": "invspec_019",
-      "general": "Laundry Room",
-      "specific": "North Cabinet",
-      "tier1": "Laundry Room",
-      "tier2": "North Cabinet",
-      "place": "Laundry Room",
-      "bin": "North Cabinet",
-      "location": "Laundry Room / North Cabinet",
       "serial_number": "",
-      "serial": "",
       "acquisition_date": null,
-      "acquiredDate": null,
       "value": null,
       "valueAmount": "",
       "notes": "This is an additional detail.",
@@ -550,41 +586,47 @@
       "photoPath": null,
       "createdAt": "2026-09-07T20:54:55.672319",
       "modifyDate": "2026-09-18T16:47:11.422500",
-      "updatedAt": "2026-09-18T16:47:11.422500",
-      "image": null
+      "updatedAt": "2026-09-18T16:47:11.422500"
     },
     {
       "id": "invitem_006",
       "name": "Life Jackets",
+      "generalId": "gen_007",
       "specificId": "invspec_021",
+      "serial_number": "",
+      "acquisition_date": null,
+      "value": null,
+      "valueAmount": "",
       "notes": "",
-      "image": null,
-      "createdAt": "2026-09-07T21:11:48.278816"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-07T21:11:48.278816",
+      "modifyDate": "2026-09-07T21:11:48.278816",
+      "updatedAt": "2026-09-07T21:11:48.278816"
     },
     {
       "id": "invitem_007",
       "name": "Another item",
+      "generalId": "gen_001",
       "specificId": "invspec_005",
+      "serial_number": "",
+      "acquisition_date": null,
+      "value": null,
+      "valueAmount": "",
       "notes": "",
-      "image": null,
-      "createdAt": "2026-09-08T00:21:00.354917"
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-09-08T00:21:00.354917",
+      "modifyDate": "2026-09-08T00:21:00.354917",
+      "updatedAt": "2026-09-08T00:21:00.354917"
     },
     {
       "id": "invitem_008",
       "name": "An inventory item.",
-      "generalId": "invgen_005",
+      "generalId": "gen_005",
       "specificId": "invspec_022",
-      "general": "Shed",
-      "specific": "Bin 2",
-      "tier1": "Shed",
-      "tier2": "Bin 2",
-      "place": "Shed",
-      "bin": "Bin 2",
-      "location": "Shed / Bin 2",
       "serial_number": "123456",
-      "serial": "123456",
       "acquisition_date": "2026-09-02T00:00:00.000",
-      "acquiredDate": "2026-09-02T00:00:00.000",
       "value": 300.0,
       "valueAmount": "300.00",
       "notes": "Notes and notes and still more notes",
@@ -595,20 +637,12 @@
       "updatedAt": "2026-09-18T22:12:55.067749"
     },
     {
+      "id": "invitem_009",
       "name": "Refrigerator",
-      "generalId": "invgen_002",
+      "generalId": "gen_002",
       "specificId": "invspec_007",
-      "general": "Kitchen",
-      "specific": "",
-      "tier1": "Kitchen",
-      "tier2": "",
-      "place": "Kitchen",
-      "bin": "",
-      "location": "Kitchen",
       "serial_number": "",
-      "serial": "",
       "acquisition_date": null,
-      "acquiredDate": null,
       "value": null,
       "valueAmount": "",
       "notes": "",
@@ -619,20 +653,12 @@
       "updatedAt": "2026-09-15T11:48:50.000565"
     },
     {
+      "id": "invitem_010",
       "name": "Olive Rocking Chairs",
-      "generalId": "invgen_008",
+      "generalId": "gen_010",
       "specificId": "invspec_023",
-      "general": "Living Room",
-      "specific": "",
-      "tier1": "Living Room",
-      "tier2": "",
-      "place": "Living Room",
-      "bin": "",
-      "location": "Living Room",
       "serial_number": "",
-      "serial": "",
       "acquisition_date": null,
-      "acquiredDate": null,
       "value": null,
       "valueAmount": "",
       "notes": "",
@@ -641,6 +667,22 @@
       "createdAt": "2026-09-18T22:09:30.926395",
       "modifyDate": "2026-09-18T22:09:30.926395",
       "updatedAt": "2026-09-18T22:09:30.926395"
+    },
+    {
+      "id": "inv_1791157925297",
+      "name": "Box of V9",
+      "generalId": "gen_003",
+      "specificId": "invspec_012",
+      "serial_number": "",
+      "acquisition_date": null,
+      "value": null,
+      "valueAmount": "",
+      "notes": "hi",
+      "photo": null,
+      "photoPath": null,
+      "createdAt": "2026-10-04T19:52:05.297431",
+      "modifyDate": "2026-10-04T19:52:05.297431",
+      "updatedAt": "2026-10-04T19:52:05.297431"
     }
   ],
   "poiItems": [
@@ -651,8 +693,8 @@
       "lng": 78.0868,
       "address": "483 Church Ave., Stanley, VA 22851",
       "notes": "Notes here are notes",
-      "photo": "C:\\Users\\rudy\\OneDrive\\Photos\\Leif with Brian.JPG",
-      "photoPath": "C:\\Users\\rudy\\OneDrive\\Photos\\Leif with Brian.JPG",
+      "photo": "C:\\Users\\rudy\\Documents/WhereLog/photos/Leif with Brian.JPG",
+      "photoPath": "C:\\Users\\rudy\\Documents/WhereLog/photos/Leif with Brian.JPG",
       "createdAt": "2026-09-15T00:27:35.509219",
       "modifyDate": "2026-09-15T00:27:35.509219",
       "updatedAt": "2026-09-15T00:27:35.509219"
@@ -671,6 +713,6 @@
       "updatedAt": "2026-09-15T12:06:27.562263"
     }
   ],
-  "version": 5,
-  "savedAt": "2026-09-18T22:12:55.068794"
+  "version": 9,
+  "savedAt": "2026-10-04T19:52:05.298428"
 }

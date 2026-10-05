@@ -101,56 +101,46 @@ class _HomeScreenState extends State<HomeScreen>
   List<Item> items = [];
 
   List<Place> _placesFromRepo() {
-    // NEW: Use v5 JSON naming - storageGenerals/storageSpecifics + inventoryGenerals/inventorySpecifics
-    // No hardcoded Attic/Garage fallback - app matches JSON naming
+    // v9: single generals + both specific types merged for tree view
     final Map<String, List<String>> generalsMap = {};
-
-    // Helper to add generals/specifics from repo
-    void addGeneralsAndSpecifics(List generals, List specifics) {
-      final Map<String, String> genIdToName = {};
-      for (var g in generals) {
-        if (g is Map) {
-          final id = g['id']?.toString() ?? '';
-          final name = g['name']?.toString() ?? '';
-          if (id.isNotEmpty && name.isNotEmpty) {
-            genIdToName[id] = name;
-            generalsMap.putIfAbsent(name, () => []);
-          }
+    final Map<String, String> genIdToName = {};
+    for (var g in _repo.generals) {
+      if (g is Map) {
+        final id = g['id']?.toString() ?? '';
+        final name = g['name']?.toString() ?? '';
+        if (id.isNotEmpty && name.isNotEmpty) {
+          genIdToName[id] = name;
+          generalsMap.putIfAbsent(name, () => []);
         }
       }
-      for (var s in specifics) {
-        if (s is Map) {
-          final genId = s['generalId']?.toString() ?? '';
-          final name = s['name']?.toString() ?? '';
-          if (name.trim().isEmpty) continue; // skip sentinel empty specifics
-          final genName = genIdToName[genId];
-          if (genName != null) {
-            generalsMap.putIfAbsent(genName, () => []);
-            if (!generalsMap[genName]!.contains(name)) {
-              generalsMap[genName]!.add(name);
-            }
-          }
+    }
+    for (var s in _repo.storageSpecifics) {
+      if (s is Map) {
+        final genId = s['generalId']?.toString() ?? '';
+        final name = s['name']?.toString() ?? '';
+        if (name.trim().isEmpty) continue;
+        final genName = genIdToName[genId];
+        if (genName != null) {
+          generalsMap.putIfAbsent(genName, () => []);
+          if (!generalsMap[genName]!.contains(name)) generalsMap[genName]!.add(name);
+        }
+      }
+    }
+    for (var s in _repo.inventorySpecifics) {
+      if (s is Map) {
+        final genId = s['generalId']?.toString() ?? '';
+        final name = s['name']?.toString() ?? '';
+        if (name.trim().isEmpty) continue;
+        final genName = genIdToName[genId];
+        if (genName != null) {
+          generalsMap.putIfAbsent(genName, () => []);
+          if (!generalsMap[genName]!.contains(name)) generalsMap[genName]!.add(name);
         }
       }
     }
 
-    // v6 single generals - canonical
-    addGeneralsAndSpecifics(_repo.generals, [..._repo.storageSpecifics, ..._repo.inventorySpecifics]);
-
-    // Fallback for old repo that still has storageData map (during transition)
     if (generalsMap.isEmpty) {
-      try {
-        _repo.storageData?.forEach((k, v) {
-          generalsMap[k] = (generalsMap[k] ?? [])..addAll(List<String>.from(v));
-        });
-        _repo.inventoryData?.forEach((k, v) {
-          generalsMap[k] = (generalsMap[k] ?? [])..addAll(List<String>.from(v));
-        });
-      } catch (_) {}
-    }
-
-    if (generalsMap.isEmpty) {
-      debugPrint('WARNING: _placesFromRepo empty - check Documents/wherelog_data.json has storageGenerals/inventoryGenerals (v5)');
+      debugPrint('WARNING: _placesFromRepo empty - check generals');
       return [];
     }
 
@@ -161,22 +151,20 @@ class _HomeScreenState extends State<HomeScreen>
     return list;
   }
 
-  List<Item> _itemsFromRepo() {
-    // NEW: Use v5 JSON naming - storageItems have specificId, resolve via storageSpecifics/storageGenerals
-    // No hardcoded Holiday Wreaths - app matches JSON
+
+    List<Item> _itemsFromRepo() {
     if (_repo.storageItems.isEmpty) {
-      debugPrint('WARNING: storageItems empty - check Documents/wherelog_data.json v5');
+      debugPrint('WARNING: storageItems empty');
       return [];
     }
 
-    // Build lookup for v5: specificId -> {place, bin}
     final Map<String, Map<String, String>> specLookup = {};
     try {
       final Map<String, String> genIdToName = {};
-      for (var g in (_repo.storageGenerals ?? [])) {
+      for (var g in _repo.generals) {
         if (g is Map) genIdToName[g['id']?.toString() ?? ''] = g['name']?.toString() ?? '';
       }
-      for (var s in (_repo.storageSpecifics ?? [])) {
+      for (var s in _repo.storageSpecifics) {
         if (s is Map) {
           final specId = s['id']?.toString() ?? '';
           final genId = s['generalId']?.toString() ?? '';
@@ -195,18 +183,19 @@ class _HomeScreenState extends State<HomeScreen>
       final id = m['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
       String place = '';
       String? bin;
-      // v5 naming: specificId
       final specId = m['specificId']?.toString();
+      final genId = m['generalId']?.toString();
       if (specId != null && specLookup.containsKey(specId)) {
         place = specLookup[specId]!['place'] ?? '';
         final b = specLookup[specId]!['bin'] ?? '';
         bin = b.isEmpty ? null : b;
-      } else {
-        // fallback old naming during transition
-        place = m['place'] ?? m['tier1'] ?? m['general'] ?? '';
-        bin = (m['bin'] == null || m['bin'].toString().isEmpty || m['bin'] == '(None)') ? null : m['bin'].toString();
-        if (place.isEmpty) place = m['tier1']?.toString() ?? '';
-        if (bin == null) bin = m['tier2']?.toString();
+      } else if (genId != null) {
+        // fallback resolve via generalId
+        place = _repo.generalNameForId(genId);
+        // try to find specific name directly
+        final spec = _repo.storageSpecifics.firstWhere((s) => s['id'] == specId, orElse: () => {});
+        final bn = spec['name']?.toString() ?? '';
+        bin = bn.isEmpty ? null : bn;
       }
       return Item(
         id: id,
@@ -218,29 +207,29 @@ class _HomeScreenState extends State<HomeScreen>
     }).toList();
   }
 
-  int _findRepoIndexForItem(Item item) {
+
+    int _findRepoIndexForItem(Item item) {
     // Find by id first, then by name+place+bin
     int idx =
         _repo.storageItems.indexWhere((m) => m['id']?.toString() == item.id);
     if (idx >= 0) return idx;
-    idx = _repo.storageItems.indexWhere((m) => (m['name'] == item.name &&
-        (m['place'] == item.place || m['tier1'] == item.place) &&
-        (m['bin'] == item.bin || m['tier2'] == item.bin)));
+    // v9: only generalId/specificId + name based - place/bin resolved via lookup
+    idx = _repo.storageItems.indexWhere((m) => (m['name'] == item.name && _repo.generalNameForId(m['generalId']?.toString() ?? '') == item.place));
     return idx;
   }
 
   List<Item> _inventoryItemsFromRepo() {
     if (_repo.inventoryItems.isEmpty) {
-      debugPrint('WARNING: inventoryItems empty - check Documents/wherelog_data.json v5');
+      debugPrint('WARNING: inventoryItems empty');
       return [];
     }
     final Map<String, Map<String, String>> specLookup = {};
     try {
       final Map<String, String> genIdToName = {};
-      for (var g in (_repo.inventoryGenerals ?? [])) {
+      for (var g in _repo.generals) {
         if (g is Map) genIdToName[g['id']?.toString() ?? ''] = g['name']?.toString() ?? '';
       }
-      for (var s in (_repo.inventorySpecifics ?? [])) {
+      for (var s in _repo.inventorySpecifics) {
         if (s is Map) {
           final specId = s['id']?.toString() ?? '';
           final genId = s['generalId']?.toString() ?? '';
@@ -259,15 +248,16 @@ class _HomeScreenState extends State<HomeScreen>
       String place = '';
       String? bin;
       final specId = m['specificId']?.toString();
+      final genId = m['generalId']?.toString();
       if (specId != null && specLookup.containsKey(specId)) {
         place = specLookup[specId]!['place'] ?? '';
         final b = specLookup[specId]!['bin'] ?? '';
         bin = b.isEmpty ? null : b;
-      } else {
-        place = m['place'] ?? m['tier1'] ?? m['general'] ?? '';
-        bin = (m['bin'] == null || m['bin'].toString().isEmpty || m['bin'] == '(None)') ? null : m['bin'].toString();
-        if (place.isEmpty) place = m['tier1']?.toString() ?? '';
-        if (bin == null) bin = m['tier2']?.toString();
+      } else if (genId != null) {
+        place = _repo.generalNameForId(genId);
+        final spec = _repo.inventorySpecifics.firstWhere((s) => s['id'] == specId, orElse: () => {});
+        final bn = spec['name']?.toString() ?? '';
+        bin = bn.isEmpty ? null : bn;
       }
       return Item(
         id: id,
@@ -279,7 +269,8 @@ class _HomeScreenState extends State<HomeScreen>
     }).toList();
   }
 
-  Future<void> fetchCurrentForDistance() async {
+
+    Future<void> fetchCurrentForDistance() async {
     setState(() => _isLoadingLocation = true);
     try { await Future.delayed(const Duration(milliseconds: 300)); }
     finally { if (mounted) setState(() => _isLoadingLocation = false); }
@@ -310,9 +301,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _findInventoryRepoIndexForItem(Item item) {
     int idx = _repo.inventoryItems.indexWhere((m) => m['id']?.toString() == item.id);
     if (idx >= 0) return idx;
-    idx = _repo.inventoryItems.indexWhere((m) => (m['name'] == item.name &&
-        (m['place'] == item.place || m['tier1'] == item.place) &&
-        (m['bin'] == item.bin || m['tier2'] == item.bin)));
+    idx = _repo.inventoryItems.indexWhere((m) => (m['name'] == item.name && _repo.generalNameForId(m['generalId']?.toString() ?? '') == item.place));
     return idx;
   }
 
@@ -1083,15 +1072,19 @@ class _HomeScreenState extends State<HomeScreen>
             final map = Map<String, dynamic>.from(_repo.storageItems[idx]);
             // v5: need to resolve specificId for new place/bin
             // For simplicity, store place/bin in old fields + try to find specificId
-            map['place'] = selectedPlace;
-            map['tier1'] = selectedPlace;
-            map['bin'] = selectedBin;
-            map['tier2'] = selectedBin;
-            // Try to find matching specificId from storageSpecifics
+            // v9: only generalId/specificId stored
+            // keep old fields cleared for clean data
+            map.remove('place');
+            map.remove('tier1');
+            map.remove('bin');
+            map.remove('tier2');
+            map.remove('general');
+            map.remove('specific');
+            // v9: find generalId and specificId
             try {
-              final gen = _repo.storageGenerals.firstWhere((g) => g['name'] == selectedPlace);
-              final genId = gen['id'];
+              final genId = _repo.generalIdForName(selectedPlace ?? '');
               final spec = _repo.storageSpecifics.firstWhere((s) => s['generalId'] == genId && (s['name'] ?? '') == (selectedBin ?? ''), orElse: () => {});
+              if (genId.isNotEmpty) map['generalId'] = genId;
               if (spec.isNotEmpty) map['specificId'] = spec['id'];
             } catch (_) {}
             _repo.storageItems[idx] = map;
@@ -1104,14 +1097,19 @@ class _HomeScreenState extends State<HomeScreen>
           final idx = _repo.inventoryItems.indexWhere((m) => m['id']?.toString() == id);
           if (idx >= 0) {
             final map = Map<String, dynamic>.from(_repo.inventoryItems[idx]);
-            map['place'] = selectedPlace;
-            map['tier1'] = selectedPlace;
-            map['bin'] = selectedBin;
-            map['tier2'] = selectedBin;
+            // v9: only generalId/specificId stored
+            // keep old fields cleared for clean data
+            map.remove('place');
+            map.remove('tier1');
+            map.remove('bin');
+            map.remove('tier2');
+            map.remove('general');
+            map.remove('specific');
+            // v9: find generalId and specificId
             try {
-              final gen = _repo.inventoryGenerals.firstWhere((g) => g['name'] == selectedPlace);
-              final genId = gen['id'];
+              final genId = _repo.generalIdForName(selectedPlace ?? '');
               final spec = _repo.inventorySpecifics.firstWhere((s) => s['generalId'] == genId && (s['name'] ?? '') == (selectedBin ?? ''), orElse: () => {});
+              if (genId.isNotEmpty) map['generalId'] = genId;
               if (spec.isNotEmpty) map['specificId'] = spec['id'];
             } catch (_) {}
             _repo.inventoryItems[idx] = map;

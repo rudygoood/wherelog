@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../location_repository.dart';
+import '../wherelog_repository.dart';
 import '../widgets/notes_section.dart';
 import '../widgets/photo_details_section.dart';
 import '../widgets/app_header.dart';
@@ -28,11 +28,10 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
   String? existingPhotoPath;
   Map<String, dynamic>? _originalItem;
   final _picker = ImagePicker();
-  final _locationRepo = LocationRepository();
+  final _repo = WhereLogRepository();
   bool _isLoading = true;
   bool _notesExpanded = false;
   bool _photoDetailsExpanded = true;
-
 
   void showCenterNotice(String msg) {
     showDialog(
@@ -70,14 +69,13 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     }
   }
 
-
-
   String get fullLocationDisplay {
     final g = generalController.text.trim();
     final s = specificController.text.trim();
     if (g.isNotEmpty && s.isNotEmpty) return '$g / $s';
     return g.isNotEmpty ? g : s;
   }
+
   String get concatenatedLocation => fullLocationDisplay;
 
   Map<String, dynamic> _initialSnapshot = {};
@@ -86,8 +84,8 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     if (_originalItem == null) return false;
     final current = {
       'name': itemNameController.text.trim(),
-      'general': generalController.text.trim(),
-      'specific': specificController.text.trim(),
+      'generalCtrl': generalController.text.trim(),
+      'specificCtrl': specificController.text.trim(),
       'notes': notesController.text.trim(),
       'qty': qtyController.text.trim(),
       'value': valueController.text.trim(),
@@ -95,8 +93,8 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     };
     final orig = _initialSnapshot;
     return current['name'] != orig['name'] ||
-        current['general'] != orig['general'] ||
-        current['specific'] != orig['specific'] ||
+        current['generalCtrl'] != orig['generalCtrl'] ||
+        current['specificCtrl'] != orig['specificCtrl'] ||
         current['notes'] != orig['notes'] ||
         current['qty'] != orig['qty'] ||
         current['value'] != orig['value'] ||
@@ -126,46 +124,49 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     specificController.addListener(() => setState(() {}));
     generalFocus.addListener(() => setState(() {}));
     specificFocus.addListener(() => setState(() {}));
-    _locationRepo.load().then((_) {
-      if (_locationRepo.storageItems.length > widget.itemIndex) {
-        final item = _locationRepo.storageItems[widget.itemIndex];
+    _repo.load().then((_) {
+      if (_repo.storageItems.length > widget.itemIndex) {
+        final item = _repo.storageItems[widget.itemIndex];
         _originalItem = Map<String, dynamic>.from(item);
 
-        // v5: try to resolve general/specific from specificId first (stable JSON)
+        // v9 clean: resolve names from generalId / specificId only
         String gName = '';
         String sName = '';
+        final genId = (item['generalId'] ?? '').toString();
         final specId = (item['specificId'] ?? '').toString();
+
+        if (genId.isNotEmpty) {
+          gName = _repo.generalNameForId(genId);
+        }
         if (specId.isNotEmpty) {
           try {
-            final spec = _locationRepo.storageSpecifics.firstWhere((s) => s['id'] == specId, orElse: () => {});
+            final spec = _repo.storageSpecifics.firstWhere(
+              (s) => s['id'] == specId,
+              orElse: () => <String, dynamic>{},
+            );
             sName = (spec['name'] ?? '').toString();
-            final genId = spec['generalId']?.toString() ?? '';
-            if (genId.isNotEmpty) {
-              final gen = _locationRepo.generals.firstWhere((g) => g['id'] == genId, orElse: () => {});
-              gName = (gen['name'] ?? '').toString();
+            if (gName.isEmpty) {
+              final gidFromSpec = spec['generalId']?.toString() ?? '';
+              if (gidFromSpec.isNotEmpty) {
+                gName = _repo.generalNameForId(gidFromSpec);
+              }
             }
           } catch (_) {}
-        }
-        if (gName.isEmpty) {
-          gName = (item['general'] ?? item['tier1'] ?? item['place'] ?? '').toString();
-        }
-        if (sName.isEmpty) {
-          sName = (item['specific'] ?? item['tier2'] ?? item['bin'] ?? '').toString();
         }
 
         generalController.text = gName;
         specificController.text = sName;
         itemNameController.text = (item['name'] ?? '').toString();
         notesController.text = (item['notes'] ?? '').toString();
-        final q = item['qty'] ?? item['quantity'] ?? 1;
+        final q = item['qty'] ?? 1;
         qtyController.text = q.toString();
         final vAmt = item['valueAmount'] ?? (item['value'] != null ? item['value'].toString() : '');
         valueController.text = vAmt.toString();
         existingPhotoPath = (item['photoPath'] ?? item['photo'])?.toString();
         _initialSnapshot = {
           'name': itemNameController.text.trim(),
-          'general': generalController.text.trim(),
-          'specific': specificController.text.trim(),
+          'generalCtrl': generalController.text.trim(),
+          'specificCtrl': specificController.text.trim(),
           'notes': notesController.text.trim(),
           'qty': qtyController.text.trim(),
           'value': valueController.text.trim(),
@@ -189,8 +190,6 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     super.dispose();
   }
 
-
-
   Future<void> handleSave() async {
     if (itemNameController.text.trim().isEmpty) {
       showCenterNotice('Enter Stored Item');
@@ -200,50 +199,53 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
       showCenterNotice('Pick General');
       return;
     }
-    final loc = fullLocationDisplay.isEmpty ? generalController.text.trim() : fullLocationDisplay;
     final savedName = itemNameController.text.trim();
     final qty = int.tryParse(qtyController.text.trim()) ?? 1;
     final valueText = valueController.text.trim();
     final valueAmt = double.tryParse(valueText.replaceAll('\$', '').trim());
 
-    // resolve IDs for stable JSON
+    // v9: resolve IDs using clean helpers (no tier synonyms)
     String generalId = '';
     String specificId = '';
     try {
       final gName = generalController.text.trim();
       final sName = specificController.text.trim();
-      final gen = _locationRepo.storageGenerals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
-      generalId = gen['id']?.toString() ?? '';
-      if (sName.isNotEmpty) {
-        final spec = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
+      generalId = _repo.generalIdForName(gName);
+
+      if (generalId.isNotEmpty && sName.isNotEmpty) {
+        final spec = _repo.storageSpecifics.firstWhere(
+          (s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').toLowerCase() == sName.toLowerCase(),
+          orElse: () => <String, dynamic>{},
+        );
         specificId = spec['id']?.toString() ?? '';
         if (specificId.isEmpty) {
-          await _locationRepo.addStorageTier2(gName, sName);
-          final spec2 = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
+          await _repo.addStorageSpecific(generalId, sName);
+          final spec2 = _repo.storageSpecifics.firstWhere(
+            (s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').toLowerCase() == sName.toLowerCase(),
+            orElse: () => <String, dynamic>{},
+          );
           specificId = spec2['id']?.toString() ?? '';
         }
-      } else {
-        final sentinel = _locationRepo.storageSpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').isEmpty, orElse: () => {});
+      } else if (generalId.isNotEmpty) {
+        // optional specific blank: use empty-name sentinel if present
+        final sentinel = _repo.storageSpecifics.firstWhere(
+          (s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').trim().isEmpty,
+          orElse: () => <String, dynamic>{},
+        );
         specificId = sentinel['id']?.toString() ?? '';
+        // if still empty, keep as empty specific but ensure repo has at least list; v9 allows empty sentinel, create if missing handled by addGeneral
       }
     } catch (_) {}
 
     final orig = _originalItem ?? {};
     final nowIso = DateTime.now().toIso8601String();
+    // Clean v9 payload: ONLY generalId/specificId, no legacy synonyms
     final updated = {
       'id': orig['id'],
       'name': savedName,
       'generalId': generalId,
       'specificId': specificId,
-      'general': generalController.text.trim(),
-      'specific': specificController.text.trim(),
-      'tier1': generalController.text.trim(),
-      'tier2': specificController.text.trim(),
-      'place': generalController.text.trim(),
-      'bin': specificController.text.trim(),
-      'location': loc,
       'qty': qty,
-      'quantity': qty,
       'value': valueAmt,
       'valueAmount': valueText,
       'notes': notesController.text.trim(),
@@ -253,12 +255,8 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
       'modifyDate': nowIso,
       'updatedAt': nowIso,
     };
-    for (final k in orig.keys) {
-      if (!updated.containsKey(k)) {
-        updated[k] = orig[k];
-      }
-    }
-    await _locationRepo.updateStorageItem(widget.itemIndex, updated);
+
+    await _repo.updateStorageItem(widget.itemIndex, updated);
     if (!mounted) return;
     showCenterNotice('Saved: $savedName');
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -283,7 +281,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
       ),
     );
     if (ok == true) {
-      await _locationRepo.deleteStorageItem(widget.itemIndex);
+      await _repo.deleteStorageItem(widget.itemIndex);
       if (mounted) Navigator.pop(context, true);
     }
   }
@@ -330,7 +328,6 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     }
   }
 
-
   Future<void> openFullPhotoViewer(File file) async {
     await showDialog(
       context: context,
@@ -364,7 +361,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
                 ],
               ),
             ),
-            Positioned(
+            const Positioned(
               bottom: 12,
               left: 0,
               right: 0,
@@ -468,7 +465,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppColors.scaffold,
-                appBar: const AppHeader(screenName: 'Edit Storage'),
+        appBar: const AppHeader(screenName: 'Edit Storage'),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -481,7 +478,7 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.scaffold,
-                appBar: const AppHeader(screenName: 'Edit Storage'),
+        appBar: const AppHeader(screenName: 'Edit Storage'),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -492,11 +489,11 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
               itemNameController: itemNameController,
               generalFocus: generalFocus,
               specificFocus: specificFocus,
-              locationRepo: _locationRepo,
+              repo: _repo,
               itemHint: 'Stored Item',
             ),
             const SizedBox(height: 14),
-                        PhotoDetailsSection(
+            PhotoDetailsSection(
               storageKey: 'photoDetailsExpanded_storage_edit',
               isExpanded: _photoDetailsExpanded,
               onToggle: () => setState(() => _photoDetailsExpanded = !_photoDetailsExpanded),
@@ -508,7 +505,8 @@ class _StorageEditScreenState extends State<StorageEditScreen> {
               valueController: valueController,
               qtyController: qtyController,
             ),
-            const SizedBox(height: 14),const SizedBox(height: 14),
+            const SizedBox(height: 14),
+            const SizedBox(height: 14),
             NotesSection(
               storageKey: 'notesExpanded_storage_edit',
               controller: notesController,

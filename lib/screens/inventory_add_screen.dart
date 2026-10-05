@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../location_repository.dart';
+import '../wherelog_repository.dart';
 import '../widgets/notes_section.dart';
 import '../widgets/photo_details_section.dart';
 import '../widgets/app_header.dart';
@@ -15,7 +15,6 @@ class InventoryAddScreen extends StatefulWidget {
 }
 
 class _InventoryAddScreenState extends State<InventoryAddScreen> {
-  // RENAMED: tier1/tier2 -> general/specific (JSON stays v5: inventoryGenerals/inventorySpecifics/specificId)
   final generalController = TextEditingController();
   final specificController = TextEditingController();
   final itemNameController = TextEditingController();
@@ -28,11 +27,9 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
   List<String> addedItemsLog = [];
   File? photoFile;
   final _picker = ImagePicker();
-  final _locationRepo = LocationRepository();
+  final _repo = WhereLogRepository();
   bool _notesExpanded = false;
-  bool _photoDetailsExpanded = true; // start state from app setting
-
-  // Backward compat getters map to v5 repo methods
+  bool _photoDetailsExpanded = true;
 
   void showCenterNotice(String msg) {
     showDialog(
@@ -64,13 +61,13 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
     if (msg.startsWith('Added:')) {
       Future.delayed(const Duration(milliseconds: 1300), () {
         if (mounted) {
-          try { if (Navigator.canPop(context)) Navigator.pop(context); } catch (_) {}
+          try {
+            if (Navigator.canPop(context)) Navigator.pop(context);
+          } catch (_) {}
         }
       });
     }
   }
-
-
 
   String get fullLocationDisplay {
     final g = generalController.text.trim();
@@ -79,13 +76,69 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
     return g.isNotEmpty ? g : s;
   }
 
-  // legacy alias for old calls
-  String get concatenatedLocation => fullLocationDisplay;
+  String _resolveGeneralId(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '';
+    try {
+      final dyn = _repo as dynamic;
+      final id = dyn.generalIdForName(trimmed);
+      if (id != null && id.toString().isNotEmpty) return id.toString();
+    } catch (_) {}
+    try {
+      final gen = _repo.generals.firstWhere(
+        (g) => (g['name']?.toString() ?? '').trim() == trimmed,
+        orElse: () => <String, dynamic>{},
+      );
+      return gen['id']?.toString() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _resolveGeneralName(String id) {
+    if (id.isEmpty) return '';
+    try {
+      final dyn = _repo as dynamic;
+      final n = dyn.generalNameForId(id);
+      if (n != null && n.toString().isNotEmpty) return n.toString();
+    } catch (_) {}
+    try {
+      final gen = _repo.generals.firstWhere(
+        (g) => (g['id']?.toString() ?? '') == id,
+        orElse: () => <String, dynamic>{},
+      );
+      return gen['name']?.toString() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _resolveSpecificId(String generalId, String specificName) {
+    if (generalId.isEmpty) return '';
+    final sTrim = specificName.trim();
+    try {
+      if (sTrim.isEmpty) {
+        final sentinel = _repo.inventorySpecifics.firstWhere(
+          (s) => s['generalId']?.toString() == generalId && (s['name']?.toString() ?? '').trim().isEmpty,
+          orElse: () => <String, dynamic>{},
+        );
+        return sentinel['id']?.toString() ?? '';
+      } else {
+        final spec = _repo.inventorySpecifics.firstWhere(
+          (s) => s['generalId']?.toString() == generalId && (s['name']?.toString() ?? '').trim() == sTrim,
+          orElse: () => <String, dynamic>{},
+        );
+        return spec['id']?.toString() ?? '';
+      }
+    } catch (_) {
+      return '';
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _locationRepo.load().then((_) => setState(() {}));
+    _repo.load().then((_) => setState(() {}));
     generalController.addListener(() => setState(() {}));
     specificController.addListener(() => setState(() {}));
     generalFocus.addListener(() => setState(() {}));
@@ -105,8 +158,6 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
     super.dispose();
   }
 
-
-
   Future<void> handleAdd() async {
     if (itemNameController.text.trim().isEmpty) {
       showCenterNotice('Enter Inventory Item');
@@ -116,70 +167,51 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
       showCenterNotice('Pick General');
       return;
     }
-    final loc = fullLocationDisplay.isEmpty ? generalController.text.trim() : fullLocationDisplay;
+
+    final displayLoc = fullLocationDisplay.isEmpty ? generalController.text.trim() : fullLocationDisplay;
     final hasPhoto = photoFile != null ? ' 📷' : '';
     final addedName = itemNameController.text.trim();
     final serialText = serialController.text.trim();
     final valueText = valueController.text.trim();
     final valueAmt = double.tryParse(valueText.replaceAll('\$', '').trim());
 
-    // v5 ID resolution - JSON keys stay stable
     final gName = generalController.text.trim();
     final sName = specificController.text.trim();
-    String specificId = '';
-    String generalId = '';
-    try {
-      final gen = _locationRepo.generals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
-      generalId = gen['id']?.toString() ?? '';
-      if (sName.isNotEmpty) {
-        final spec = _locationRepo.inventorySpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
-        specificId = spec['id']?.toString() ?? '';
-      } else {
-        final sentinel = _locationRepo.inventorySpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').isEmpty, orElse: () => {});
-        specificId = sentinel['id']?.toString() ?? '';
-      }
-    } catch (_) {}
+    final generalId = _resolveGeneralId(gName);
+    final specificId = _resolveSpecificId(generalId, sName);
 
-    final nowIso = DateTime.now().toIso8601String();
+    if (generalId.isEmpty || specificId.isEmpty) {
+      showCenterNotice('General/Specific ID not found. Add them first.');
+      return;
+    }
+
     final item = {
       'name': addedName,
-      // v5 stable JSON
       'generalId': generalId,
       'specificId': specificId,
-      // denormalized + legacy for backward compat - never change JSON structure again
-      'general': gName,
-      'specific': sName,
-      'tier1': gName,
-      'tier2': sName,
-      'place': gName,
-      'bin': sName,
-      'location': loc,
       'serial_number': serialText,
-      'serial': serialText,
       'acquisition_date': acquiredDate?.toIso8601String(),
-      'acquiredDate': acquiredDate?.toIso8601String(),
       'value': valueAmt,
       'valueAmount': valueText,
       'notes': notesController.text.trim(),
       'photo': photoFile?.path,
-      'photoPath': photoFile?.path,
-      'createdAt': nowIso,
-      'modifyDate': nowIso, // NEW
-      'updatedAt': nowIso,
     };
-    await _locationRepo.addInventoryItem(item);
+
+    await _repo.addInventoryItem(item);
     setState(() {
-            final dateLabel = acquiredDate != null ? ' ${acquiredDate!.month}/${acquiredDate!.day}/${acquiredDate!.year}' : '';
+      final dateLabel = acquiredDate != null ? ' ${acquiredDate!.month}/${acquiredDate!.day}/${acquiredDate!.year}' : '';
       final serialLabel = serialText.isNotEmpty ? ' S/N:$serialText' : '';
-      addedItemsLog.add('$addedName$serialLabel$dateLabel @ $loc$hasPhoto');
+      addedItemsLog.add('$addedName$serialLabel$dateLabel @ $displayLoc$hasPhoto');
     });
     itemNameController.clear();
     notesController.clear();
     serialController.clear();
-    setState(() { acquiredDate = null; });
+    setState(() {
+      acquiredDate = null;
+    });
     valueController.clear();
     setState(() => photoFile = null);
-    showCenterNotice('Added: $addedName @ $loc$hasPhoto');
+    showCenterNotice('Added: $addedName @ $displayLoc$hasPhoto');
   }
 
   Future<void> pickAcquiredDate() async {
@@ -223,7 +255,6 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
     final XFile? img = await _picker.pickImage(source: src, imageQuality: 80, maxWidth: 1024);
     if (img != null) setState(() => photoFile = File(img.path));
   }
-
 
   Future<void> openFullPhotoViewer(File file) async {
     await showDialog(
@@ -370,11 +401,11 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
               itemNameController: itemNameController,
               generalFocus: generalFocus,
               specificFocus: specificFocus,
-              locationRepo: _locationRepo,
+              repo: _repo,
               itemHint: 'Inventory Item',
             ),
             const SizedBox(height: 14),
-                        PhotoDetailsSection(
+            PhotoDetailsSection(
               storageKey: 'photoDetailsExpanded_inventory_add',
               isExpanded: _photoDetailsExpanded,
               onToggle: () => setState(() => _photoDetailsExpanded = !_photoDetailsExpanded),
@@ -397,7 +428,8 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
                 if (picked != null) setState(() => acquiredDate = picked);
               },
             ),
-            const SizedBox(height: 14),const SizedBox(height: 14),
+            const SizedBox(height: 14),
+            const SizedBox(height: 14),
             NotesSection(
               storageKey: 'notesExpanded_inventory_add',
               controller: notesController,

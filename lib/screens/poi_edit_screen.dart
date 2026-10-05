@@ -4,7 +4,7 @@ import '../widgets/app_header.dart';
 import '../widgets/gps_location_section.dart';
 import '../widgets/photo_details_section.dart';
 import '../widgets/notes_section.dart';
-import '../location_repository.dart';
+import '../wherelog_repository.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -24,7 +24,7 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
   final valueController = TextEditingController();
   File? photoFile;
   final _picker = ImagePicker();
-  final _repo = LocationRepository();
+  final _repo = WhereLogRepository();
   bool _notesExpanded = true;
   bool _photoExpanded = true;
   bool _isGettingLocation = false;
@@ -43,7 +43,9 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
           latController.text = (item['lat'] ?? '').toString();
           lngController.text = (item['lng'] ?? '').toString();
           if ((item['photo'] ?? item['photoPath'] ?? '').toString().isNotEmpty) {
-            try { photoFile = File((item['photo'] ?? item['photoPath']).toString()); } catch (_) {}
+            try {
+              photoFile = File((item['photo'] ?? item['photoPath']).toString());
+            } catch (_) {}
           }
           _isLoading = false;
         });
@@ -130,7 +132,8 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
         child: Wrap(children: [
           ListTile(leading: const Icon(Icons.photo_camera), title: const Text('Take Photo'), onTap: () => Navigator.pop(c, ImageSource.camera)),
           ListTile(leading: const Icon(Icons.photo_library), title: const Text('Choose from Gallery'), onTap: () => Navigator.pop(c, ImageSource.gallery)),
-          if (photoFile != null) ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text('Remove Photo'), onTap: () => Navigator.pop(c, null)),
+          if (photoFile != null)
+            ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text('Remove Photo'), onTap: () => Navigator.pop(c, null)),
         ]),
       ),
     );
@@ -171,8 +174,10 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
       return;
     }
     final nowIso = DateTime.now().toIso8601String();
+    // Preserve existing id/createdAt when editing
+    final existing = (_repo.poiItems.length > widget.itemIndex) ? _repo.poiItems[widget.itemIndex] : <String, dynamic>{};
     final item = {
-      'id': 'poi_${DateTime.now().millisecondsSinceEpoch}',
+      'id': existing['id'] ?? 'poi_${DateTime.now().millisecondsSinceEpoch}',
       'name': nameController.text.trim(),
       'lat': lat,
       'lng': lng,
@@ -180,7 +185,7 @@ class _PoiEditScreenState extends State<PoiEditScreen> {
       'notes': notesController.text.trim(),
       'photo': photoFile?.path,
       'photoPath': photoFile?.path,
-      'createdAt': nowIso,
+      'createdAt': existing['createdAt'] ?? nowIso,
       'modifyDate': nowIso,
       'updatedAt': nowIso,
     };

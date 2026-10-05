@@ -4,7 +4,7 @@ import '../widgets/app_header.dart';
 import '../widgets/gps_location_section.dart';
 import '../widgets/photo_details_section.dart';
 import '../widgets/notes_section.dart';
-import '../location_repository.dart';
+import '../wherelog_repository.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -23,7 +23,7 @@ class _PoiAddScreenState extends State<PoiAddScreen> {
   final valueController = TextEditingController();
   File? photoFile;
   final _picker = ImagePicker();
-  final _repo = LocationRepository();
+  final _repo = WhereLogRepository();
   bool _notesExpanded = true;
   bool _photoExpanded = true;
   bool _isGettingLocation = false;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../location_repository.dart';
+import '../wherelog_repository.dart';
 import '../widgets/notes_section.dart';
 import '../widgets/photo_details_section.dart';
 import '../widgets/app_header.dart';
@@ -29,11 +29,10 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
   String? existingPhotoPath;
   Map<String, dynamic>? _originalItem;
   final _picker = ImagePicker();
-  final _locationRepo = LocationRepository();
+  final _repo = WhereLogRepository();
   bool _notesExpanded = false;
-  bool _photoDetailsExpanded = true; // start state from app setting
+  bool _photoDetailsExpanded = true;
   bool _isLoading = true;
-
 
   void showCenterNotice(String msg) {
     showDialog(
@@ -71,14 +70,13 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     }
   }
 
-
-
   String get fullLocationDisplay {
     final g = generalController.text.trim();
     final s = specificController.text.trim();
     if (g.isNotEmpty && s.isNotEmpty) return '$g / $s';
     return g.isNotEmpty ? g : s;
   }
+
   String get concatenatedLocation => fullLocationDisplay;
 
   Map<String, dynamic> _initialSnapshot = {};
@@ -87,25 +85,28 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     if (_originalItem == null) return false;
     final current = {
       'name': itemNameController.text.trim(),
-      'general': generalController.text.trim(),
-      'specific': specificController.text.trim(),
+      'genName': generalController.text.trim(),
+      'specName': specificController.text.trim(),
       'notes': notesController.text.trim(),
       'serial': serialController.text.trim(),
-      'serial_number': serialController.text.trim(),
       'value': valueController.text.trim(),
       'photo': photoFile?.path ?? existingPhotoPath ?? '',
     };
     final orig = _initialSnapshot;
     return current['name'] != orig['name'] ||
-        current['general'] != orig['general'] ||
-        current['specific'] != orig['specific'] ||
+        current['genName'] != orig['genName'] ||
+        current['specName'] != orig['specName'] ||
         current['notes'] != orig['notes'] ||
         current['serial'] != orig['serial'] ||
         current['value'] != orig['value'] ||
         current['photo'] != orig['photo'];
   }
 
-  Future<void> pickAcquiredDate() async { final now = DateTime.now(); final picked = await showDatePicker(context: context, initialDate: acquiredDate ?? now, firstDate: DateTime(2000), lastDate: DateTime(2100)); if (picked != null) setState(() => acquiredDate = picked); }
+  Future<void> pickAcquiredDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(context: context, initialDate: acquiredDate ?? now, firstDate: DateTime(2000), lastDate: DateTime(2100));
+    if (picked != null) setState(() => acquiredDate = picked);
+  }
 
   Future<bool> _confirmDiscard() async {
     if (!_hasUnsavedChanges()) return true;
@@ -130,31 +131,24 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     specificController.addListener(() => setState(() {}));
     generalFocus.addListener(() => setState(() {}));
     specificFocus.addListener(() => setState(() {}));
-    _locationRepo.load().then((_) {
-      if (_locationRepo.inventoryItems.length > widget.itemIndex) {
-        final item = _locationRepo.inventoryItems[widget.itemIndex];
+    _repo.load().then((_) {
+      if (_repo.inventoryItems.length > widget.itemIndex) {
+        final item = _repo.inventoryItems[widget.itemIndex];
         _originalItem = Map<String, dynamic>.from(item);
 
-        // v5: try to resolve general/specific from specificId first (stable JSON)
         String gName = '';
         String sName = '';
+        final genId = (item['generalId'] ?? '').toString();
         final specId = (item['specificId'] ?? '').toString();
+
+        if (genId.isNotEmpty) {
+          gName = _repo.generalNameForId(genId);
+        }
         if (specId.isNotEmpty) {
           try {
-            final spec = _locationRepo.inventorySpecifics.firstWhere((s) => s['id'] == specId, orElse: () => {});
+            final spec = _repo.inventorySpecifics.firstWhere((s) => (s['id']?.toString() ?? '') == specId, orElse: () => {});
             sName = (spec['name'] ?? '').toString();
-            final genId = spec['generalId']?.toString() ?? '';
-            if (genId.isNotEmpty) {
-              final gen = _locationRepo.generals.firstWhere((g) => g['id'] == genId, orElse: () => {});
-              gName = (gen['name'] ?? '').toString();
-            }
           } catch (_) {}
-        }
-        if (gName.isEmpty) {
-          gName = (item['general'] ?? item['tier1'] ?? item['place'] ?? '').toString();
-        }
-        if (sName.isEmpty) {
-          sName = (item['specific'] ?? item['tier2'] ?? item['bin'] ?? '').toString();
         }
 
         generalController.text = gName;
@@ -163,19 +157,19 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
         notesController.text = (item['notes'] ?? '').toString();
         serialController.text = (item['serial_number'] ?? item['serial'] ?? '').toString();
         final dateStr = item['acquisition_date'] ?? item['acquiredDate'];
-        if (dateStr != null) { try { acquiredDate = DateTime.parse(dateStr.toString()); } catch (_) {} }
+        if (dateStr != null) {
+          try { acquiredDate = DateTime.parse(dateStr.toString()); } catch (_) {}
+        }
         final vAmt = item['valueAmount'] ?? (item['value'] != null ? item['value'].toString() : '');
         valueController.text = vAmt.toString();
         existingPhotoPath = (item['photoPath'] ?? item['photo'])?.toString();
         _initialSnapshot = {
           'name': itemNameController.text.trim(),
-          'general': generalController.text.trim(),
-          'specific': specificController.text.trim(),
+          'genName': generalController.text.trim(),
+          'specName': specificController.text.trim(),
           'notes': notesController.text.trim(),
           'serial': serialController.text.trim(),
           'acquiredDate': acquiredDate?.toIso8601String() ?? '',
-          'value': valueController.text.trim(),
-          'photo': existingPhotoPath ?? '',
           'value': valueController.text.trim(),
           'photo': existingPhotoPath ?? '',
         };
@@ -197,8 +191,6 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     super.dispose();
   }
 
-
-
   Future<void> handleSave() async {
     if (itemNameController.text.trim().isEmpty) {
       showCenterNotice('Enter Inventory Item');
@@ -208,31 +200,41 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
       showCenterNotice('Pick General');
       return;
     }
-    final loc = fullLocationDisplay.isEmpty ? generalController.text.trim() : fullLocationDisplay;
     final savedName = itemNameController.text.trim();
     final serialText = serialController.text.trim();
     final valueText = valueController.text.trim();
     final valueAmt = double.tryParse(valueText.replaceAll('\$', '').trim());
 
-    // resolve IDs for stable JSON
+    // resolve IDs for stable JSON using v9 API
     String generalId = '';
     String specificId = '';
     try {
       final gName = generalController.text.trim();
       final sName = specificController.text.trim();
-      final gen = _locationRepo.inventoryGenerals.firstWhere((g) => (g['name']?.toString() ?? '') == gName, orElse: () => {});
-      generalId = gen['id']?.toString() ?? '';
-      if (sName.isNotEmpty) {
-        final spec = _locationRepo.inventorySpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
-        specificId = spec['id']?.toString() ?? '';
-        if (specificId.isEmpty) {
-          await _locationRepo.addInventoryTier2(gName, sName);
-          final spec2 = _locationRepo.inventorySpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '') == sName, orElse: () => {});
-          specificId = spec2['id']?.toString() ?? '';
+      generalId = _repo.generalIdForName(gName);
+      if (generalId.isNotEmpty) {
+        if (sName.isNotEmpty) {
+          final spec = _repo.inventorySpecifics.firstWhere(
+            (s) => (s['generalId']?.toString() ?? '') == generalId && (s['name']?.toString() ?? '') == sName,
+            orElse: () => {},
+          );
+          specificId = spec['id']?.toString() ?? '';
+          if (specificId.isEmpty) {
+            await _repo.addInventorySpecific(generalId, sName);
+            final spec2 = _repo.inventorySpecifics.firstWhere(
+              (s) => (s['generalId']?.toString() ?? '') == generalId && (s['name']?.toString() ?? '') == sName,
+              orElse: () => {},
+            );
+            specificId = spec2['id']?.toString() ?? '';
+          }
+        } else {
+          // blank sentinel for optional specific
+          final sentinel = _repo.inventorySpecifics.firstWhere(
+            (s) => (s['generalId']?.toString() ?? '') == generalId && (s['name']?.toString() ?? '').isEmpty,
+            orElse: () => {},
+          );
+          specificId = sentinel['id']?.toString() ?? '';
         }
-      } else {
-        final sentinel = _locationRepo.inventorySpecifics.firstWhere((s) => s['generalId'] == generalId && (s['name']?.toString() ?? '').isEmpty, orElse: () => {});
-        specificId = sentinel['id']?.toString() ?? '';
       }
     } catch (_) {}
 
@@ -243,17 +245,8 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
       'name': savedName,
       'generalId': generalId,
       'specificId': specificId,
-      'general': generalController.text.trim(),
-      'specific': specificController.text.trim(),
-      'tier1': generalController.text.trim(),
-      'tier2': specificController.text.trim(),
-      'place': generalController.text.trim(),
-      'bin': specificController.text.trim(),
-      'location': loc,
       'serial_number': serialText,
-      'serial': serialText,
       'acquisition_date': acquiredDate?.toIso8601String(),
-      'acquiredDate': acquiredDate?.toIso8601String(),
       'value': valueAmt,
       'valueAmount': valueText,
       'notes': notesController.text.trim(),
@@ -263,12 +256,8 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
       'modifyDate': nowIso,
       'updatedAt': nowIso,
     };
-    for (final k in orig.keys) {
-      if (!updated.containsKey(k)) {
-        updated[k] = orig[k];
-      }
-    }
-    await _locationRepo.updateInventoryItem(widget.itemIndex, updated);
+
+    await _repo.updateInventoryItem(widget.itemIndex, updated);
     if (!mounted) return;
     showCenterNotice('Saved: $savedName');
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -293,7 +282,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
       ),
     );
     if (ok == true) {
-      await _locationRepo.deleteInventoryItem(widget.itemIndex);
+      await _repo.deleteInventoryItem(widget.itemIndex);
       if (mounted) Navigator.pop(context, true);
     }
   }
@@ -340,7 +329,6 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     }
   }
 
-
   Future<void> openFullPhotoViewer(File file) async {
     await showDialog(
       context: context,
@@ -380,7 +368,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
               right: 0,
               child: Center(
                 child: Text(
-                  'Pinch to zoom — tap ✕ to close',
+                  'Pinch to zoom — tap \u2715 to close',
                   style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -478,7 +466,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppColors.scaffold,
-                appBar: const AppHeader(screenName: 'Edit Inventory'),
+        appBar: const AppHeader(screenName: 'Edit Inventory'),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -491,7 +479,7 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.scaffold,
-                appBar: const AppHeader(screenName: 'Edit Inventory'),
+        appBar: const AppHeader(screenName: 'Edit Inventory'),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -502,11 +490,11 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
               itemNameController: itemNameController,
               generalFocus: generalFocus,
               specificFocus: specificFocus,
-              locationRepo: _locationRepo,
+              repo: _repo,
               itemHint: 'Inventory Item',
             ),
             const SizedBox(height: 14),
-                        PhotoDetailsSection(
+            PhotoDetailsSection(
               storageKey: 'photoDetailsExpanded_inventory_edit',
               isExpanded: _photoDetailsExpanded,
               onToggle: () => setState(() => _photoDetailsExpanded = !_photoDetailsExpanded),
@@ -529,7 +517,8 @@ class _InventoryEditScreenState extends State<InventoryEditScreen> {
                 if (picked != null) setState(() => acquiredDate = picked);
               },
             ),
-            const SizedBox(height: 14),const SizedBox(height: 14),
+            const SizedBox(height: 14),
+            const SizedBox(height: 14),
             NotesSection(
               storageKey: 'notesExpanded_inventory_edit',
               controller: notesController,
